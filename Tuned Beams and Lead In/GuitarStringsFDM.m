@@ -180,3 +180,8 @@ plot(solution)
 title(sprintf('Solution with %d String Modes', modeCount));
 xlabel('String Position (i)');
 ylabel('Relative Strength');
+
+%% References
+% [1] A. Struthers. (2025). Mathematical modeling of a whammy bar kalimba
+%   [Mathematica slides]. Available:
+%   https://github.com/AllanStruthersMTU/Spring-Classes-2025/blob/main/ComplexAnalysis/April25LakeStateKalimba.nb.
