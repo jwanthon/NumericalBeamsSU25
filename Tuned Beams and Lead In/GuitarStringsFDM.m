@@ -14,7 +14,6 @@ clc; clear all;
 %   - Add audio conversion
 %       - Maybe build as a function?
 %   - Add graph of frequency response
-% - Clean up comments and syntax
 %
 %% Building the FDM Matrix
 % Let's model an undamped guitar string. 
@@ -22,184 +21,195 @@ clc; clear all;
 %   utt being the second partial of u with respect to time, and uxx being the
 %   second partial of u with respect to distance along the string. 
 % - Let the string's tension be described by T [N] and the string's cross-sectional
-%   density be described by rho [kg/m]. 
+%   density be described by ρ [kg/m]. 
 % - Finally, suppose the string is of a length L [m]. We must enforce
 %   boundary conditions where u(0, t) and u(L, t) are both zero.
-
-rho     = 1;                          % Parameter, density [kg/m^2]
-T       = 1;                          % Parameter, tension [N]
-L       = 1;                          % Parameter, length [m]
-
+%
 % Doing force analysis of the string, we see that:
-%   rho * utt = T * uxx, or:
-%   utt = T / rho * uxx                                          (eq. 1)
-% 
-% To figure out what our string should look like when it vibrates, we can
-%   use the finite difference method (FDM) to determine the mode shapes of
-%   the string.
-% 
-% To begin, let's create our mesh. That is, we subdivide the string's
-%   length into equally sized chunks to perform analysis. We want there to
-%   be n chunks.
-% 
-% Let the ith position on the string, xi, be equal to i * deltaX. i
-%   will increment from 1 to n. We can describe this as a vector x. Since
-%   the boundary conditions are zero, we only care about points internal to
-%   the string.
+%   ρ * utt = T * uxx, or:
+%   utt = T / ρ * uxx                                          (eq. 1)
 
-n       = 100;                          % Parameter, mesh size
+rho = 1;                          % Parameter, density (ρ) [kg/m^2]
+T   = 1;                          % Parameter, tension (T) [N]
+L   = 1;                          % Parameter, length  (L) [m]
 
-deltaX  = L / (n  + 1);
-x       = linspace(deltaX, L - deltaX, n); 
+% We will numerically solve for the string's vibration using the finite difference
+%   method (FDM). To begin, let's create a mesh and subdivide the string's
+%   length into n equally sized chunks.
 
-% Using the wave equation, we know that utt depends only on a constant and
-%   uxx. Knowing the difference quotient definition of the derivative, we
-%   can approximate uxx using an algebraic system of equations of u(xi, t). 
+n   = 100;                        % Parameter, mesh size
+
+% We want the ith position of the string, xi, to be equal to i * ∆x. We also
+%   only care about points internal to the string, since we know by the
+%   boundary conditions that the points on the ends of the strings are
+%   stationary!
+
+deltax  = L / (n  + 1);
+
+% Using FDM on the wave equation allows us to create an algebraic system of
+%   equations based on approximating uxx as a finite differnence of u(xi,
+%   t) for fixed t.
 % 
 % The first derivative at xi, ux(xi, t), can be approximated by:
-%   ux(xi, t) = (u(xi + deltaX, t) - u(xi - deltaX, t)) / deltaX
+%   ux(xi) = (u(xi+∆x, t) - u(xi-∆x, t)) / ∆x
 % 
 % And by using another finite difference of these values at xi, we find:
-%   uxx(xi, t) = ((uxi - deltaX, t) - 2(xi, t) + u(xi + deltaX, t)) /
-%   deltaX^2                                                     (eq. 2)
+%   uxx(xi, t) = (u(xi-∆x, t) - 2u(xi, t) + u(xi+∆x, t)) / ∆x^2 (eq. 2)
+%
+% Hence, uxx depends only on the values of u at different points on the
+%   mesh. That is, uxx(xi) = u(x(i-1)) - 2u(xi) + u(x(i+1)).
+%   Our boundary conditions enforce special conditions for i = 1 and i = n.
+%   When i = 1, the point to the left of xi is an end of the string, where
+%   u = 0, and:
+%   uxx(x1) = (0 - 2u(x1, t) + u(x2, t)) / ∆x^2 
+%
+% Similarly, when i = n, the point to the right of xi is another
+%   end of the string, where u = 0, and:
+%   uxx(xn) = (u(x(n-1), t) - 2u(xn, t) + 0) / ∆x^2
 % 
-% But this is a system of equations depending only on values of xi! We can
-%   thus describe this by the matrix-vector equation:
-%   utt = -T / (rho * deltaX^2) * A.u                            (eq. 3)
+% That is, uxx can be represented by a system of linear equations, all 
+%   depending only on points internal to the string. This can also be
+%   expressed by the matrix-vector equation:
 %
-%   where A is the finite difference matrix, and u is simply the displacement
-%   across the length of the string, where the ith element describes the
-%   displacement at xi. Note that the position information is baked into the
-%   product A.u, so now our system is dependent only on time.
+%   utt = -T / (ρ * ∆x^2) * A.u                            (eq. 3)
 %
-% Each row of the matrix should contain a series of 1, -2, 1 to describe
-%   the computations done in the finite difference, where the -2 sits on
-%   the main diagonal. Since the boundary conditions on the string are zero,
-%   any 1s that would appear on the matrix in the topmost and bottommost
-%   rows are also zeroes and do not occur in the system. Note that eq. 3
-%   negates this matrix to have a positive main diagonal, so our matrix
-%   A will be populated by -1s and 2s.
+%   where A is the finite difference matrix, and u is simply the
+%   displacement across the length of the string for all values xi at time
+%   t. Our matrix is in the following form:
 %
-% Note that other FDM techniques (especially for ODEs) will place these
-%   boundary conditions on the topmost and bottommost rows.
+%    2      -1        0     ...
+%   -1       2       -1     ...
+%    0      -1        2     ...
+%    .       .        .   .      .
+%    .       .        .      .  -1
+%    0       0        0   -1     2
+%
+%   with 2s on the main diagonal, and -1s directly above and below the main
+%   diagonal.
 
 % Build the FDM matrix
 temp1   = repmat(2, n, 1);
 temp2   = repmat(-1, n-1, 1);
 A       = diag(temp1) + diag(temp2, 1) + diag(temp2, -1);
 
-clear temp1 temp2;
+clear temp1 temp2 % Cleanup
 
 %% Mode Shapes
-% Inspecting eq. 3, we can see that utt is defined by the matrix-vector
-%   product A.u. Because of the way that this PDE operates, we can break
-%   our solution into two pieces of information: the solution modes, and
-%   the solution mode strengths.
+% From eq. 3, we know that utt is defined by both the position information,
+%   which now depends only on time, and the FDM matrix A. Note that A is
+%   built using only our boundary conditions! 
 % 
-% Our boundary conditions inform the way that the matrix for uxx is built.
-%   As a result, only certain solution shapes, or modes can be built on the
-%   string. However, we don't know what specific modes will propogate until
-%   our initial conditions in time (i.e., plucking the string) are
-%   satisfied.
-% 
-% From eq. 3, we see that any solution vector u will be a scalar mutliple
-%   of utt. That is, all solution vectors of A will be eigenvectors of the
-%   system! We don't know how these eigenvectors will be scaled in the
-%   solution without our time-domain initial conditions, but these would
-%   describe the modes, or shapes.
-% Note that eigenvectors oscilate in sign from element to element, and must
-%   be sorted to remove this behavior.
+% We can see that any basic solution shape, or mode, of the system, when
+%   passed through A, will output a scalar multiple of itself. That is, the
+%   modes of the system on the string are the eigenvectors of A.
 
 modeCount          = 5;               % Parameter, # of displayed modes
 [eigVecs, eigVals] = eig(A);
 
-% Sort the eigenvectors and eigenvalues from smallest to largest mode
+% Sort the eigenvectors and associated eigenvalues from smallest to largest
 eigVecs = flip(eigVecs, 1);
 eigVals = flip(flip(eigVals, 1),2);
 
-% Remove oscillation from each eigenvector and plot each mode, from largest
-%   to smallest strength
+% Plot the specified number of modes
 tiledlayout(1,2); 
 nexttile; 
 hold on;
 for i = 1:modeCount
-    temp1 = eigVecs(:,i);
-    plot(temp1,"Marker",".", "LineStyle","none")
+    plot(eigVecs(:,i),"Marker",".", "LineStyle","none")
 end
 title(sprintf('First %d Mode Shapes of a Guitar String', modeCount));
 xlabel('String Position (i)');
-ylabel('Relative Mode Strength');
+ylabel('Displacement [m]');
 
 %% Time-Domain Solutions
-% Let's install initial displacements and accelerations at some point on
-%   the string, each at the time t = 0.
+% Let's install some initial conditions on the string at time t = 0.
 
-initDisp = [1, 0.1 * L];             % Parameter, [strength, x location]
-initVelc = [1, 0.1*L];               % Parameter, [strength, x location]
+% Create initial conditions at one point
+pointPos = [5, 0.5 * L];             % Parameter, [displacement [m], location]
+pointVel = [-4, 0.5 * L];            % Parameter, [velocity [m/s], location]
 
-icent = round(initDisp(2)/deltaX);
-displacementVector = [linspace(0,initDisp(1), icent-1),initDisp(1),linspace(initDisp(1),0, n-icent)];
-velocityVector = [linspace(0,initVelc(1), icent-1),initVelc(1),linspace(initDisp(1),0, n-icent)];
+% Discritize initial conditions, and assume position and velocity changes
+%   linearly across the string. By changing the initPos and initVel, we can
+%   change our initial conditions.
+centerpoint = round(pointPos(2)/deltax);
+initPos = [linspace(0,pointPos(1), centerpoint-1),pointPos(1),linspace(pointPos(1),0, n-centerpoint)];
+centerpoint = round(pointVel(2)/deltax);
+initVel = [linspace(0,pointVel(1), centerpoint-1),pointVel(1),linspace(pointPos(1),0, n-centerpoint)];
+
+clear pointPos pointVel % Cleanup
 
 % By inspecting our modes, we see that our solutions will be sinusoids that
 %   with zeroes (or nodes) at the endpoints of the strings, and with
-%   the ith mode having i+1 modes equidistant across the string.
+%   the ith mode having i-1 nodes equidistant across the string.
 % Using eq. 3, we can find that the angular frequency of each mode is of
 %   the form:
-%   wi = sqrt(T * lambdai / (rho * deltaX^2))           (eq. 4)
+%   wi = sqrt(T * λi / (ρ * ∆x^2))           (eq. 4)
 %   
-%   where wi is the ith angular frequency [rad], and lambdai is the
-%   eigenvalue associated with the ith eigenvector (or mode).
-% Let's add this information to our graph.
+%   where wi is the ith angular frequency [rad], and λi is the eigenvalue 
+%   associated with the ith eigenvector (or mode).
 
 % Determine angular frequencies
-w = diag(sqrt(T*abs(eigVals)/(rho*deltaX^2)));
+angFreq = diag(sqrt(T*abs(eigVals)/(rho*deltax^2)));
 
 % Add frequency information to graph
 for i = 1:modeCount
-    legends(i) = string(sprintf('%.2f [rad/s]', w(n-i+1)));
+    legends(i) = string(sprintf('%.2f [rad/s]', angFreq(n-i+1)));
 end
 legend(legends);
 hold off;
 
-% To solve our time domain solution, we need to solve eq. 3. We know that
-%   all of the eigenvectors will be sines and cosines in the time domain,
-%   so we will know that for any solution vector,
-%   ui = ki(ai * cos(wi * t) + bi * sin(wi * t))
+clear legends i % Cleanup
+
+% To solve our time domain solution, we need to solve eq. 3. From ODEs, we 
+%   know that all of the eigenvectors will be sines and cosines in the time 
+%   domain, so we will know that for the ith element of the solution vector,
+%   ui = ki(ai * cos(wi * t) + bi * sin(wi * t)).
 %   
-%   and we can solve for the "weight" vectors a and b using our initial
-%   conditions.
+%   We can solve for the vectors a and b using our initial
+%   conditions. At t = 0, ui = ai*ki, and ui' = ki*wi*bi.
 
-K = -T/(rho * deltaX^2)*A;              % Solution matrix
-a = linsolve(K, displacementVector');
-b = linsolve(K, velocityVector');
-b = b./w;
+K = -T / (rho * deltax^2) * A;                % Matrix in eq. 3
+aCoeff = linsolve(K, initPos');               % Solving K.a = u
+bCoeff = linsolve(K, initVel');               % Solving k.(b.*w) = u'
+bCoeff = bCoeff./angFreq;                     % Dividing out w from b.*w
 
+% Solve for the solution composed of modecount modes
 i = 1;
 for t = 0:0.02:10
     for j = 1:modeCount
-        solution(:,i) = a.*eigVecs(:,j).*cos(t*w) + b.*eigVecs(:,j).*sin(t*w);
+        solution(:,i) = aCoeff.*eigVecs(:,j).*cos(t*angFreq) + bCoeff.*eigVecs(:,j).*sin(t*angFreq);
     end
     i = i+1;
 end
 length = i-1;
 
-[minSol, maxSol] = bounds(solution);
-minSol = min(minSol);
-maxSol = max(maxSol);
+% Plot an animated graph of the solution
+[solution_min, solution_max] = bounds(solution);    % Determine axes
+solution_min = min(solution_min);
+solution_max = max(solution_max);
 
 nexttile
+
+% Plot an animated graph
 while 1
     for i = 1:length
     plot(solution(:,i))
     title(sprintf('Undamped Solution with %d String Modes', modeCount));
     xlabel('String Position (i)');
     ylabel('Relative Strength');
-    axis([1 n minSol maxSol]);
+    axis([1 n solution_min solution_max]);
     drawnow
     pause(0.02)
     end
 end
+
+%% FFT Of Solution
+% We can understand our solution in the frequency domain, as well, since we
+%   know both the frequencies and the magnitudes of the associated
+%   sinusoids.
+
+%% ADD FOURIER STUFF
+%% ADD AUDIO CONVERSION USING FFT
 
 %% References
 % [1] A. Struthers. (2025). Mathematical modeling of a whammy bar kalimba
