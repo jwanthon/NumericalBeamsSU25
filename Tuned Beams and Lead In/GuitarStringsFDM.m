@@ -3,11 +3,14 @@ clc; clear all;
 %  Joseph Anthony
 %
 % Created:         5/5/25
-% Last Modified:   5/8/25
+% Last Modified:   5/9/25
 %
 % Description: Numerically solves the wave equation for a guitar string of
-%  an abitrary length and determines the solution structure.
+%  an abitrary length using FDM and determines the solution structure.
 %
+% Required: 
+%   solutionToAudio.m                                       (Function)
+%   solutionToFFT.m                                         (Function)
 %% TODO:
 % - Add damped response
 % - Frequency response
