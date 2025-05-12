@@ -48,7 +48,7 @@ for i = 1:n
         phi_i = times(phi_i, (x - L*j/i));      % Multiply in equally-spaced zeros
     end
     phi(i) = phi_i;
-    Dphi(i) = diff(phi_i, x);                   % Find each function's derivative
+    Dphi(i) = diff(phi_i, x);                   
 end
 
 %% Procedure for the FDM Matrix
@@ -73,7 +73,7 @@ end
 % We want (i, j) of B to have value ∫ Φi * Φj, and (i, j) of A to have
 %   value ∫ Φi' * Φj'. Note that A and B are both symmetric.
 
-% Computing upper triangles of A and B (since they're symmetric)
+% Computing upper triangles of A and B
 A = zeros(n, n);
 B = A;
 
@@ -85,8 +85,6 @@ for col = 1:n
     end
 end
 
-% Reflect upper triangles across the main diagonal and correct duplicate
-%   entries on the main diagonal
 A = A + A' - diag(diag(A));
 B = B + B' - diag(diag(B));
 %% Working with FEM Matrix
