@@ -106,7 +106,7 @@ disp('FDM Matrix Built');
 %   passed through A, will output a scalar multiple of itself. That is, the
 %   modes of the system on the string are the eigenvectors of A.
 
-modeCount          = 5;               % Parameter, # of displayed modes
+modeCount          = 3;               % Parameter, # of displayed modes
 [eigVecs, eigVals] = eig(FDM);
 
 % Sort the eigenvectors and associated eigenvalues from smallest to largest
@@ -171,7 +171,7 @@ clear legends i % Cleanup
 %   We can solve for the vectors a and b using our initial
 %   conditions. At t = 0, ui = ai*ki, and ui' = ki*wi*bi.
 
-scaledFDM = -T / (rho * deltax^2) * FDM;       % Matrix in eq. 3
+scaledFDM = -T / (rho * deltax^2) * FDM       % Matrix in eq. 3
 aCoeff = linsolve(scaledFDM, initPos');       % Solving K.a = u
 bCoeff = linsolve(scaledFDM, initVel');       % Solving k.(b.*w) = u'
 bCoeff = bCoeff./angFreq;                     % Dividing out w from b.*w
