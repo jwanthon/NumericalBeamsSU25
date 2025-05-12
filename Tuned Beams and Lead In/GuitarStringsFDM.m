@@ -40,7 +40,7 @@ L   = 1;                          % Parameter, length  (L) [m]
 %   method (FDM). To begin, let's create a mesh and subdivide the string's
 %   length into n equally sized chunks.
 
-n   = 100;                        % Parameter, mesh size
+n   = 5;                        % Parameter, mesh size
 
 % We want the ith position of the string, xi, to be equal to i * ∆x. We also
 %   only care about points internal to the string, since we know by the
@@ -93,10 +93,10 @@ deltax  = L / (n  + 1);
 % Build the FDM matrix
 temp1   = repmat(2, n, 1);
 temp2   = repmat(-1, n-1, 1);
-A       = diag(temp1) + diag(temp2, 1) + diag(temp2, -1);
+FDM       = diag(temp1) + diag(temp2, 1) + diag(temp2, -1);
 
 clear temp1 temp2 % Cleanup
-
+disp('FDM Matrix Built');
 %% Mode Shapes
 % From eq. 3, we know that utt is defined by both the position information,
 %   which now depends only on time, and the FDM matrix A. Note that A is
@@ -107,7 +107,7 @@ clear temp1 temp2 % Cleanup
 %   modes of the system on the string are the eigenvectors of A.
 
 modeCount          = 5;               % Parameter, # of displayed modes
-[eigVecs, eigVals] = eig(A);
+[eigVecs, eigVals] = eig(FDM);
 
 % Sort the eigenvectors and associated eigenvalues from smallest to largest
 eigVecs = flip(eigVecs, 1);
@@ -171,9 +171,9 @@ clear legends i % Cleanup
 %   We can solve for the vectors a and b using our initial
 %   conditions. At t = 0, ui = ai*ki, and ui' = ki*wi*bi.
 
-K = -T / (rho * deltax^2) * A;                % Matrix in eq. 3
-aCoeff = linsolve(K, initPos');               % Solving K.a = u
-bCoeff = linsolve(K, initVel');               % Solving k.(b.*w) = u'
+scaledFDM = -T / (rho * deltax^2) * FDM       % Matrix in eq. 3
+aCoeff = linsolve(scaledFDM, initPos');       % Solving K.a = u
+bCoeff = linsolve(scaledFDM, initVel');       % Solving k.(b.*w) = u'
 bCoeff = bCoeff./angFreq;                     % Dividing out w from b.*w
 
 % Solve for the solution composed of modecount modes
