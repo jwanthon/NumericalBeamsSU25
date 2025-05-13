@@ -23,7 +23,7 @@ clc; clear all; hold off;
 rho = 1;                          % Parameter, density (ρ) [kg/m^2]
 T   = 1;                          % Parameter, tension (T) [N]
 L   = 1;                          % Parameter, length  (L) [m]
-n   = 10;                          % Parameter, mesh size
+n   = 50;                          % Parameter, mesh size
 modeCount = 5;                    % Parameter, # of displayed modes
 
 % This time, we will approximate our solution in the form of the following:
@@ -66,34 +66,40 @@ end
 % Notice that the integrals on the LHS and RHS are both able to easily
 %   determined by integrating across L, since all Φi and Φj are 
 %   polynomials. We can describe this through the matrix-vector equation:
-%   B.a'' = A.a                                   (A from LHS, B from RHS)
-%   a'' = K.a                                     (K = inv(A)B)  (eq. 3)
+%   M.a'' = K.a                                   (M from LHS, K from RHS)
+%   
+%   where K represents the stiffness matrix, and M represents the mass
+%   matrix.
 %
 %% Building the FDM Matrix
-% We want (i, j) of B to have value ∫ Φi * Φj, and (i, j) of A to have
-%   value ∫ Φi' * Φj'. Note that A and B are both symmetric.
+% We want (i, j) of K to have value ∫ Φi * Φj, and (i, j) of M to have
+%   value ∫ Φi' * Φj'. Note that both matrices are symmetric!
 
-% Computing upper triangles of A and B (since they're symmetric)
-A = zeros(n, n);
-B = A;
+% Computing upper triangles of M and K (since they're symmetric)
+M = zeros(n, n);
+K = M;
 
 for col = 1:n
     fprintf('Creating integral matrices col %d\n', col);
     for row = 1:col
-        A(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
-        B(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
+        M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
+        K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
     end
 end
 
 % Reflect upper triangles across the main diagonal and correct duplicate
 %   entries on the main diagonal
-A = A + A' - diag(diag(A));
-B = B + B' - diag(diag(B));
+M = M + M' - diag(diag(M));
+K = K + K' - diag(diag(K));
 %% Working with FEM Matrix
-FEM = inv(A) * B;
+FEM = K;
 disp('FEM matrix built.');
 
+% Find and sort eigenvectors
 [eigVecs, eigVals] = eig(FEM);
+[d, index] = sort(diag(eigVals))
+eigVals = eigVals(index,index)
+eigVecs = eigVecs(:, index)
 
 % Plot eigenvectors
 hold on;
@@ -113,7 +119,7 @@ clear row col i j
 % 
 % % Add respective angular frequencies
 % for i = 1:modeCount
-%     legends(i) = string(sprintf('%.2f [rad/s]', angFreq(n-i+1)));
+%     legends(i) = string(sprintf('%.2f [rad/s]', angFreq(i)));
 % end
 % legend(legends);
 % hold off;
