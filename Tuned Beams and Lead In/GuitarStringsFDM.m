@@ -3,7 +3,7 @@ clc; clear all;
 %  Joseph Anthony
 %
 % Created:         5/5/25
-% Last Modified:   5/12/25
+% Last Modified:   5/13/25
 %
 % Description: Numerically solves the wave equation for a guitar string of
 %  an abitrary length using FDM and determines the solution structure.
@@ -80,9 +80,9 @@ deltax  = L / (n  + 1);
 %   displacement across the length of the string for all values xi at time
 %   t. Our matrix is in the following form:
 %
-%    2      -1        0     ...
-%   -1       2       -1     ...
-%    0      -1        2     ...
+%    2      -1        0     ...  0
+%   -1       2       -1     ...  0
+%    0      -1        2     ...  0
 %    .       .        .   .      .
 %    .       .        .      .  -1
 %    0       0        0   -1     2
@@ -124,23 +124,6 @@ title(sprintf('First %d Mode Shapes of a Guitar String', modeCount));
 xlabel('String Position (i)');
 ylabel('Displacement [m]');
 
-%% Time-Domain Solutions
-% Let's install some initial conditions on the string at time t = 0.
-
-% Create initial conditions at one point
-pointPos = [5, 0.5 * L];             % Parameter, [displacement [m], location]
-pointVel = [-4, 0.5 * L];            % Parameter, [velocity [m/s], location]
-
-% Discritize initial conditions, and assume position and velocity changes
-%   linearly across the string. By changing the initPos and initVel, we can
-%   change our initial conditions.
-centerpoint = round(pointPos(2)/deltax);
-initPos = [linspace(0,pointPos(1), centerpoint-1),pointPos(1),linspace(pointPos(1),0, n-centerpoint)];
-centerpoint = round(pointVel(2)/deltax);
-initVel = [linspace(0,pointVel(1), centerpoint-1),pointVel(1),linspace(pointPos(1),0, n-centerpoint)];
-
-clear pointPos pointVel % Cleanup
-
 % By inspecting our modes, we see that our solutions will be sinusoids that
 %   with zeroes (or nodes) at the endpoints of the strings, and with
 %   the ith mode having i-1 nodes equidistant across the string.
@@ -160,8 +143,23 @@ for i = 1:modeCount
 end
 legend(legends);
 hold off;
-
 clear legends i % Cleanup
+
+%% Time-Domain Solutions
+% Let's install some initial conditions on the string at time t = 0.
+
+% Create initial conditions at one point
+pointPos = [5, 0.5 * L];             % Parameter, [displacement [m], location]
+pointVel = [-4, 0.5 * L];            % Parameter, [velocity [m/s], location]
+
+% Discritize initial conditions, and assume position and velocity changes
+%   linearly across the string.
+centerpoint = round(pointPos(2)/deltax);
+initPos = [linspace(0,pointPos(1), centerpoint-1),pointPos(1),linspace(pointPos(1),0, n-centerpoint)];
+centerpoint = round(pointVel(2)/deltax);
+initVel = [linspace(0,pointVel(1), centerpoint-1),pointVel(1),linspace(pointPos(1),0, n-centerpoint)];
+
+clear pointPos pointVel % Cleanup
 
 % To solve our time domain solution, we need to solve eq. 3. From ODEs, we 
 %   know that all of the eigenvectors will be sines and cosines in the time 
@@ -171,32 +169,41 @@ clear legends i % Cleanup
 %   We can solve for the vectors a and b using our initial
 %   conditions. At t = 0, ui = ai*ki, and ui' = ki*wi*bi.
 
-scaledFDM = -T / (rho * deltax^2) * FDM;       % Matrix in eq. 3
+scaledFDM = -T / (rho * deltax^2) * FDM;      % Matrix in eq. 3
 aCoeff = linsolve(scaledFDM, initPos');       % Solving K.a = u
 bCoeff = linsolve(scaledFDM, initVel');       % Solving k.(b.*w) = u'
 bCoeff = bCoeff./angFreq;                     % Dividing out w from b.*w
 
-% Solve for the solution composed of modecount modes
+% Solve for the low-resolution solution (animated)
 i = 1;
 for t = 0:0.02:10
+    for j = 1:modeCount
+        anim_solution(:,i) = aCoeff.*eigVecs(:,j).*cos(t*angFreq) + bCoeff.*eigVecs(:,j).*sin(t*angFreq);
+    end
+    i = i+1;
+end
+length = i -1;
+
+% Solve for high-res solution (used in FFT)
+i = 1;
+for t = 0:1/10000:1
     for j = 1:modeCount
         solution(:,i) = aCoeff.*eigVecs(:,j).*cos(t*angFreq) + bCoeff.*eigVecs(:,j).*sin(t*angFreq);
     end
     i = i+1;
 end
-length = i-1;
 
+%% Animated Solution
 % Plot an animated graph of the solution
-[solution_min, solution_max] = bounds(solution);    % Determine axes
+[solution_min, solution_max] = bounds(anim_solution);    % Determine axes
 solution_min = min(solution_min);
 solution_max = max(solution_max);
 
-nexttile
+nexttile;
 
-% Plot an animated graph
 while 1
     for i = 1:length
-    plot(solution(:,i))
+    plot(anim_solution(:,i))
     title(sprintf('Undamped Solution with %d String Modes', modeCount));
     xlabel('String Position (i)');
     ylabel('Relative Strength');
@@ -205,15 +212,9 @@ while 1
     pause(0.02)
     end
 end
-
-%% FFT Of Solution
-% We can understand our solution in the frequency domain, as well, since we
-%   know both the frequencies and the magnitudes of the associated
-%   sinusoids.
-
-%% ADD FOURIER STUFF
-%% ADD AUDIO CONVERSION USING FFT
-
+%% 
+[transform, freqspace] = solutionToFFT(solution, 50, 1/10000);
+plot(freqspace, transform);
 %% References
 % [1] A. Struthers. (2025). Mathematical modeling of a whammy bar kalimba
 %   [Mathematica slides]. Available:
