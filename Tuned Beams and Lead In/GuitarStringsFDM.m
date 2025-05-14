@@ -3,7 +3,7 @@ clc; clear all;
 %  Joseph Anthony
 %
 % Created:         5/5/25
-% Last Modified:   5/13/25
+% Last Modified:   5/14/25
 %
 % Description: Numerically solves the wave equation for a guitar string of
 %  an abitrary length using FDM and determines the solution structure.
@@ -176,7 +176,9 @@ bCoeff = bCoeff./angFreq;                     % Dividing out w from b.*w
 
 % Solve for the low-resolution solution (animated)
 i = 1;
-for t = 0:0.02:10
+timemax = 10;
+timestep = 0.02;
+for t = 0:timestep:timemax
     for j = 1:modeCount
         anim_solution(:,i) = aCoeff.*eigVecs(:,j).*cos(t*angFreq) + bCoeff.*eigVecs(:,j).*sin(t*angFreq);
     end
@@ -209,7 +211,7 @@ while 1
     ylabel('Relative Strength');
     axis([1 n solution_min solution_max]);
     drawnow
-    pause(0.02)
+    pause(timestep)
     end
 end
 %% 
