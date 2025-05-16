@@ -1,4 +1,5 @@
 clc; clear all;
+addpath('Functions\')
 %% BIBIBeamFDM.m
 %  Joseph Anthony
 %
@@ -9,7 +10,6 @@ clc; clear all;
 %   for built in-built in beam using FDM and determines the solution 
 %   structure.
 %
-addpath('../Functions/');
 %% TODO:
 % - Solve ODE correctly
 %% Building the FDM Matrix
@@ -106,7 +106,7 @@ xlabel('Beam Position (i)');
 ylabel('Time [sec]');
 zlabel('Displacement [m]');
 
-fig2 = visual_sparseMtx(FDM);
+fig2 = visual_sparseMatrix(FDM);
 fig2.Title = "FDM Matrix";
 
 %% Animated Solution

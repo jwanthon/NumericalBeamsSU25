@@ -1,4 +1,4 @@
-%% visual_sparseMtx.m
+%% visual_sparseMatrix.m
 %  Joseph Anthony
 %
 % Created:         5/16/25
@@ -13,16 +13,15 @@
 %   fig:    figure
 
 
-function fig = visual_sparseMtx(matrix)
+function fig = visual_sparseMatrix(matrix)
     % Create figure
     fig = figure;
     fig = heatmap(matrix);
 
-    cd ..
-    dir 'Data Files'
+    addpath('Data Files\');
 
     % Format and rescale colormap
-    colormap = importdata("");
+    colormap = importdata('colormap_sparse.mat');
     fig.Colormap = colormap;
     [~, max] = bounds(matrix, "all");
     fig.ColorLimits = [-abs(max), abs(max)];

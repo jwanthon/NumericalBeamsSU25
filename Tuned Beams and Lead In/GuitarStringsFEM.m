@@ -1,4 +1,5 @@
-clc; clear all; hold off;
+clc; clear all;
+addpath('../Functions/');
 %% GuitarStringsFEM.m
 %  Joseph Anthony
 %
