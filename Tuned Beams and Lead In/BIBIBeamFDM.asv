@@ -9,7 +9,6 @@ clc; clear all;
 %   for built in-built in beam using FDM and determines the solution 
 %   structure.
 %
-addpath('../Functions/');
 %% TODO:
 % - Solve ODE correctly
 %% Building the FDM Matrix
@@ -54,6 +53,8 @@ FDM(1,1) = 7;
 FDM(n,n) = 7;
 disp('FDM Matrix Built');
 
+fig1 = visualizeMatrix(scaledFDM);
+
 %% Mode Shapes
 % Now our system is in the form:
 %   ρ * utt = Γ * A.u
@@ -67,8 +68,7 @@ eigVecs = flip(eigVecs, 1);
 eigVals = flip(flip(eigVals, 1),2);
 
 % Plot the specified number of modes
-
-fig1 = tiledlayout(1,2); 
+tiledlayout(1,2); 
 nexttile; 
 hold on;
 for i = 1:modeCount
@@ -105,9 +105,6 @@ title('Beam Displacement over Time');
 xlabel('Beam Position (i)');
 ylabel('Time [sec]');
 zlabel('Displacement [m]');
-
-fig2 = visual_sparseMtx(FDM);
-fig2.Title = "FDM Matrix";
 
 %% Animated Solution
 % % Plot an animated graph of the solution
