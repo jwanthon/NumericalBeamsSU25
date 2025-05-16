@@ -1,5 +1,5 @@
 clc; clear all;
-addpath('../Functions/');
+addpath('Functions\');
 %% GuitarStringsFEM.m
 %  Joseph Anthony
 %
@@ -24,7 +24,7 @@ addpath('../Functions/');
 rho = 1;                          % Parameter, density (ρ) [kg/m^2]
 T   = 1;                          % Parameter, tension (T) [N]
 L   = 1;                          % Parameter, length  (L) [m]
-n   = 50;                          % Parameter, mesh size
+n   = 25;                          % Parameter, mesh size
 modeCount = 5;                    % Parameter, # of displayed modes
 
 % This time, we will approximate our solution in the form of the following:
@@ -124,3 +124,6 @@ clear row col i j
 % end
 % legend(legends);
 % hold off;
+
+fig2 = visual_sparseMatrix(FEM);
+fig2.Title = "FEM Matrix";

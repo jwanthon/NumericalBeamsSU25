@@ -1,4 +1,5 @@
 clc; clear all;
+addpath('Functions\');
 %% GuitarStringsFDM.m
 %  Joseph Anthony
 %
@@ -114,7 +115,7 @@ eigVecs = flip(eigVecs, 1);
 eigVals = flip(flip(eigVals, 1),2);
 
 % Plot the specified number of modes
-tiledlayout(1,2); 
+fig2 = tiledlayout(1,2); 
 nexttile; 
 hold on;
 for i = 1:modeCount
