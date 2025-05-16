@@ -1,5 +1,5 @@
 clc; clear all;
-addpath('Functions\')
+addpath('Functions\');
 %% BIBIBeamFDM.m
 %  Joseph Anthony
 %
