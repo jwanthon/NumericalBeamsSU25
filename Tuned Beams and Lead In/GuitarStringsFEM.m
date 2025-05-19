@@ -1,5 +1,4 @@
 clc; clear all;
-hold off
 addpath('Functions\');
 %% GuitarStringsFEM.m
 %  Joseph Anthony
@@ -12,11 +11,6 @@ addpath('Functions\');
 %
 % Required:
 %   Symbolic Math Toolbox                                   (Add-on)
-%% TODO:
-% - Build matrices A and B
-% - Build FDM matrix
-% - Analyze FDM matrix modes
-% - Explain integration by parts more
 %% Building Polynomial Test Functions
 % Now, let's try to solve our model with FEM.
 %   utt = T / ρ * uxx                                          (eq. 1)
@@ -73,7 +67,7 @@ end
 %   where K represents the stiffness matrix, and M represents the mass
 %   matrix.
 %
-%% Building the FDM Matrix
+%% Building the Mass and Stiffness Matrices
 % We want (i, j) of K to have value ∫ Φi * Φj, and (i, j) of M to have
 %   value ∫ Φi' * Φj'. Note that both matrices are symmetric!
 
@@ -82,11 +76,11 @@ M = zeros(n, n);
 K = M;
 
 for col = 1:n
-    fprintf('Creating integral matrices col %d\n', col);
     for row = 1:col
         M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
         K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
     end
+    fprintf('Column %d\n of M and K matrices calculated', col);
 end
 
 % Reflect upper triangles across the main diagonal and correct duplicate
@@ -147,4 +141,4 @@ clear row col i j
 
 % Create a visual of the FEM matrix
 fig2 = visual_sparseMatrix(FEM);
-fig2.Title = "FEM Matrix";
+fig2.Title = "Guitar String FEM Matrix";
