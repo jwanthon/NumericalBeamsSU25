@@ -7,3 +7,4 @@ These files include step-by-step descriptions of the solution approach, along wi
 - **GuitarStringsFDM.m** contains FDM modeling of a guitar string.
 - **GuitarStringFEM.m** contains FEM modeling of a guitar string.
 - **BIBIBeamFDM.m** contains FDM modeling of a built in-built in beam.
+- **BIBIBeamFEM.m** contains FEM modeling of a built in-built in beam.
