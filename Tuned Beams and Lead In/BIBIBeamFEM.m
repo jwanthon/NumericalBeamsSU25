@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/19/25
-% Last Modified:   5/19/25
+% Last Modified:   5/27/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for built in-built in beam using FEM and determines the solution 
@@ -17,8 +17,8 @@ addpath('Functions\');
 %   %   ρ * utt = Γ * uxxx                                      (eq. 1)
 % with u(0, t) = u(L, t) = 0, u'(0, t) = u'(L, t) = 0.          (BCs)
 
-rho         = 20;       % Mass per unit length [kg/m]
-gamma       = 1;        % Flexural rigidity [N·m²]
+rho         = 7.85;       % Mass per unit length [kg/m]
+gamma       = 5.643;        % Flexural rigidity [N·m²]
 L           = 1;      % Beam length [m]
 n           = 50;       % Mesh size
 modeCount   = 5;        % Number of displayed modes
@@ -54,7 +54,7 @@ for col = 1:n
         M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
         K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
     end
-    fprintf('Column %d\n of M and K matrices calculated', col);
+    fprintf('Column %d of M and K matrices calculated\n', col);
 end
 
 % Reflect upper triangles across the main diagonal and correct duplicate
@@ -88,6 +88,11 @@ for i = 1:n
 end
 disp('Basis function string effects calculated.');
 
+% Normalize the basis functions
+for i = 1:n
+    beamBasis(:,i) = beamBasis(:,i)/max(abs(beamBasis(:,i)));
+end
+
 % Create the mode shapes by scaling the basis functions by each eigenvector
 modeShapes = beamBasis*eigVecs;
 disp('Mode shapes calculated.');
@@ -95,10 +100,10 @@ disp('Mode shapes calculated.');
 % Plot modecount eigenvectors
 hold on;
 for i = 1:modeCount
-     plot(modeShapes(:,i),"Marker",".")
+     plot(linspace(0,L,n+2),[0, modeShapes(:,i)', 0],"Marker",".")
 end
 title(sprintf('First %d Mode Shapes of a BI-BI Beam', modeCount));
-xlabel('Beam Position (i)');
+xlabel('Beam Position [m]');
 ylabel('Displacement [m]');
 hold off
 

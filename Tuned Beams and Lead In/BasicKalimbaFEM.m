@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/20/25
-% Last Modified:   5/20/25
+% Last Modified:   5/27/25
 %
 % Description: Solves the Euler-Bernoulli beam equation for a simple model
 %   of a kalimba using FEM techniques.
@@ -18,11 +18,11 @@ addpath('Functions\');
 % free-free at x = L,   u''(L) = u'''(L) = 0
 % no motion at x = b,   u(b)   = 0                             (BCs)
 
-rho         = 20;       % Mass per unit length [kg/m]
-gamma       = 1;        % Flexural rigidity [N·m²]
+rho         = 7.85;       % Mass per unit length [kg/m]
+gamma       = 5.643;        % Flexural rigidity [N·m²]
 L           = 1;        % Beam length [m]
-b           = 0.1;      % Bridge point [m]
-n           = 30;       % Mesh size
+b           = 0.25;      % Bridge point [m]
+n           = 50;       % Mesh size
 modeCount   = 5;        % Number of displayed modes
 
 % Initial function: 
@@ -84,12 +84,17 @@ for i = 1:n
 end
 deltax = L/(n+1);
 
-% Determine the effect of each basis function on the string
+% Determine the effect of each basis function on the beam
 beamBasis = zeros(n,n);
 for i = 1:n
     beamBasis(i,:) = ht(deltax*i);
 end
 disp('Basis function string effects calculated.');
+
+% Normalize the basis functions
+for i = 1:n
+    beamBasis(:,i) = beamBasis(:,i)/max(abs(beamBasis(:,i)));
+end
 
 % Create the mode shapes by scaling the basis functions by each eigenvector
 modeShapes = beamBasis*eigVecs;
@@ -98,16 +103,16 @@ disp('Mode shapes calculated.');
 % Plot modecount eigenvectors
 hold on;
 for i = 1:modeCount
-     plot(modeShapes(:,i),"Marker",".")
+     plot(linspace(0,L,n+1),[0, modeShapes(:,i)'],"Marker",".")
 end
 title(sprintf('First %d Mode Shapes of a Basic Kalimba', modeCount));
-xlabel('Beam Position (i)');
+xlabel('Beam Position [m]');
 ylabel('Displacement [m]');
 hold off
 
 % Cleanup
 clear row col i j 
 
-% Create a visual of the FEM matrix
-fig2 = visual_sparseMatrix(FEM);
-fig2.Title = "Basic Kalimba FEM Matrix";
+% % Create a visual of the FEM matrix
+% fig2 = visual_sparseMatrix(FEM);
+% fig2.Title = "Basic Kalimba FEM Matrix";
