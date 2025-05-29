@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/9/25
-% Last Modified:   5/19/25
+% Last Modified:   5/29/25
 %
 % Description: Numerically solves the wave equation for a guitar string of
 %  an abitrary length using FEM and determines the solution structure.
@@ -56,8 +56,8 @@ end
 %   ∫ v*utt dx = k * ∫ v*uxx dx                   (integrating across L)
 %   ∫ Φi * utt dx = k * ∫ Φi * uxx dx                     (v is some Φi)
 %   ∫ Φi * Σ (αj'' * Φj) dx = k∫ Φi * Σ (αj * Φj'') dx           (eq. 2)
-%   Σ aj'' * (∫ Φi'' * Φj'')dx = k*Σ(αj * ∫(Φi * Φj'')dx)
-%   Σ aj'' * (∫ Φi'' * Φj'')dx = k*Σ(αj * ∫(Φi' * Φj')dx) (int. by parts)
+%   Σ aj'' * (∫ Φi * Φj)dx = k*Σ(αj * ∫(Φi * Φj'')dx)
+%   Σ aj'' * (∫ Φi * Φj)dx = k*Σ(αj * ∫(Φi' * Φj')dx) (int. by parts)
 %
 % Notice that the integrals on the LHS and RHS are both able to easily
 %   determined by integrating across L, since all Φi and Φj are 
@@ -68,8 +68,8 @@ end
 %   matrix.
 %
 %% Building the Mass and Stiffness Matrices
-% We want (i, j) of K to have value ∫ Φi * Φj, and (i, j) of M to have
-%   value ∫ Φi' * Φj'. Note that both matrices are symmetric!
+% We want (i, j) of K to have value ∫ Φi' * Φj', and (i, j) of M to have
+%   value ∫ Φi * Φj. Note that both matrices are symmetric!
 
 % Computing upper triangles of M and K (since they're symmetric)
 M = zeros(n, n);
@@ -80,7 +80,7 @@ for col = 1:n
         M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
         K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
     end
-    fprintf('Column %d\n of M and K matrices calculated', col);
+    fprintf('Column %d of M and K matrices calculated\n', col);
 end
 
 % Reflect upper triangles across the main diagonal and correct duplicate
@@ -105,6 +105,7 @@ for i = 1:n
     ht = matlabFunction(phi);
 end
 deltax = L/(n+1);
+%% 
 
 % Determine the effect of each basis function on the string
 beamBasis = zeros(n,n);
@@ -112,6 +113,11 @@ for i = 1:n
     beamBasis(i,:) = ht(deltax*i);
 end
 disp('Basis function string effects calculated.');
+
+% Normalize the basis functions
+for i = 1:n
+    beamBasis(:,i) = beamBasis(:,i)/max(abs(beamBasis(:,i)));
+end
 
 % Create the mode shapes by scaling the basis functions by each eigenvector
 modeShapes = beamBasis*eigVecs;

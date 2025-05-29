@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/19/25
-% Last Modified:   5/27/25
+% Last Modified:   5/29/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for built in-built in beam using FEM and determines the solution 
@@ -42,8 +42,8 @@ for i = 1:n
 end
 
 %% Building the Mass and Stiffness Matrices
-% We want (i, j) of K to have value ∫ Φi * Φj, and (i, j) of M to have
-%   value ∫ Φi' * Φj'.
+% We want (i, j) of K to have value ∫ Φi' * Φj', and (i, j) of M to have
+%   value ∫ Φi * Φj.
 
 % Computing upper triangles of M and K (since they're symmetric)
 M = zeros(n, n);
