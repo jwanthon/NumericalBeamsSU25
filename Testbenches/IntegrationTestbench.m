@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/29/25
-% Last Modified:   5/29/25
+% Last Modified:   6/02/25
 %
 % Description: Testbench for different integration techniques for 
 %   calculating FEM stiffness matrices with large quantities of basis 
@@ -17,7 +17,7 @@ addpath('Functions\');
 %   Symbolic Math Toolbox           
 
 n = 50; % Mesh size
-L = 1;  % Length  (L) [m]
+L = 10;  % Length  (L) [m]
 
 %% Generating Basis Functions
 % Create vector of test function polynomials and their derivative
@@ -52,8 +52,24 @@ A = rand(1,50)*10000;
 B = rand(1,50)*10000;
 f = @() multiplyCoeffs(A,B);
 timeit(f)
+%% Determine Derivative Basis Effects
+% tic/toc: ~166.19 sec
+tic
+% Turn derivative functions into usable form for MATLAB
+ht = zeros(1,n);
+for i = 1:n
+    ht = matlabFunction(Dphi);
+end
+deltax = L/(n+1); 
+xvals = linspace(deltax, n*deltax, n);
 
-%% Generate Stiffness Matrix
+% Determine the effect of each derivative function on the string
+beamBasis = zeros(n,n);
+for i = 1:n
+    beamBasis(i,:) = ht(deltax*i);
+end
+toc
+%% Generate Stiffness Matrix - Poly Method
 % Generate stiffness matrix by calculating coefficient vectors and 
 %   doing dot products with polynomial integration coefficients
 % tic/toc: ~ 0.161444 sec
@@ -78,4 +94,23 @@ for col = 1:n
 end
 K = K + K' - diag(diag(K));
 toc
+%% Generate Stiffness Matrix - Trap Sum
+% Generate stiffness matrix by integrating trap rules across each product
+%   of derivative basis functions
+%
+% tic/toc: >0.01 sec
+tic
 
+% Build stiffness matrix
+K = zeros(n);
+
+for col = 1:n
+    for row = 1:col
+        % Determine the current product function
+        temp = beamBasis(row,:).*beamBasis(col,:);
+        % Find the trap rule sum of this beam
+        K(row, col) = trapz(xvals, temp);
+    end
+end
+
+toc
