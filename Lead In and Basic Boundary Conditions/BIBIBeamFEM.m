@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         5/19/25
-% Last Modified:   5/29/25
+% Last Modified:   6/5/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for built in-built in beam using FEM and determines the solution 
@@ -20,7 +20,7 @@ addpath('Functions\');
 rho         = 7.85;       % Mass per unit length [kg/m]
 gamma       = 5.643;        % Flexural rigidity [N·m²]
 L           = 1;      % Beam length [m]
-n           = 50;       % Mesh size
+n           = 20;       % Mesh size
 modeCount   = 5;        % Number of displayed modes
 
 % To satisfy the BCs, we will ensure that each function contains a product
@@ -30,7 +30,7 @@ modeCount   = 5;        % Number of displayed modes
 % Create vector of test function polynomials and their derivatives
 syms phi_i(x)
 phi = sym(1:n);
-Dphi = sym(1:n);
+D2phi = sym(1:n);
 for i = 1:n
     fprintf('Creating test function %d\n', i);
     phi_i = x^2*(x-L);
@@ -38,11 +38,11 @@ for i = 1:n
         phi_i = times(phi_i, (x - L*j/i));      % Multiply in equally-spaced zeros
     end
     phi(i) = phi_i;
-    Dphi(i) = diff(phi_i, x);                   % Find each function's derivative
+    D2phi(i) = diff(diff(phi_i, x),x);                   % Find each function's derivative
 end
 
 %% Building the Mass and Stiffness Matrices
-% We want (i, j) of K to have value ∫ Φi' * Φj', and (i, j) of M to have
+% We want (i, j) of K to have value ∫ Φi'' * Φj'', and (i, j) of M to have
 %   value ∫ Φi * Φj.
 
 % Computing upper triangles of M and K (since they're symmetric)
@@ -51,15 +51,15 @@ K = M;
 
 for col = 1:n
     for row = 1:col
-        M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
-        K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
+%        M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
+        K(row, col) = double(int(D2phi(row) * D2phi(col), [0, L]));
     end
     fprintf('Column %d of M and K matrices calculated\n', col);
 end
 
 % Reflect upper triangles across the main diagonal and correct duplicate
 %   entries on the main diagonal
-M = M + M' - diag(diag(M));
+%M = M + M' - diag(diag(M));
 K = K + K' - diag(diag(K));
 
 %% Working with FEM Matrix

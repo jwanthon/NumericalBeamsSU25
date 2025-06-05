@@ -16,7 +16,7 @@ addpath('Functions\');
 % Required:
 %   Symbolic Math Toolbox           
 
-n = 50; % Mesh size
+n = 20; % Mesh size
 L = 10;  % Length  (L) [m]
 
 %% Generating Basis Functions
@@ -25,14 +25,14 @@ L = 10;  % Length  (L) [m]
 tic
 syms phi_i(x)
 phi = sym(1:n);
-Dphi = sym(1:n);
+D2phi = sym(1:n);
 for i = 1:n
     phi_i = x;
     for j = 1:i
         phi_i = times(phi_i, (x - L*j/i));      % Multiply in equally-spaced zeros
     end
     phi(i) = phi_i;
-    Dphi(i) = diff(phi_i, x);                   % Find each function's derivative
+    D2phi(i) = diff(diff(phi_i, x),x);          % Find each function's 2nd derivative
 end
 toc
 
@@ -40,10 +40,10 @@ toc
 % Find coefficient matrices for Dphi
 % tic/toc: ~ 2.4 sec
 tic
-    coeff_Dphi = zeros(n,n+1);
+    coeff_D2phi = zeros(n,n+1);
 for i = 1:n
-    temp = coeffs(Dphi(i));
-    coeff_Dphi(i,:) = [temp, zeros(1,n-length(temp)+1)];
+    temp = coeffs(D2phi(i));
+    coeff_D2phi(i,:) = [temp, zeros(1,n-length(temp)+1)];
 end
 toc
 
@@ -58,7 +58,7 @@ tic
 % Turn derivative functions into usable form for MATLAB
 ht = zeros(1,n);
 for i = 1:n
-    ht = matlabFunction(Dphi);
+    ht = matlabFunction(D2phi);
 end
 deltax = L/(n+1); 
 xvals = linspace(deltax, n*deltax, n);
@@ -87,7 +87,7 @@ K = zeros(n);
 for col = 1:n
     for row = 1:col
         % Figure out the element's new coefficient vector
-        temp = multiplyCoeffs(coeff_Dphi(row,:), coeff_Dphi(col,:));
+        temp = multiplyCoeffs(coeff_D2phi(row,:), coeff_D2phi(col,:));
         K(row, col) = dot(temp, coeff_integration);
     end
     fprintf('Column %d of stiffness matrix calculated\n', col);

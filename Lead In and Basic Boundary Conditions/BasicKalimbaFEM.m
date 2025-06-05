@@ -22,7 +22,7 @@ rho         = 7.85;       % Mass per unit length [kg/m]
 gamma       = 5.643;        % Flexural rigidity [N·m²]
 L           = 1;        % Beam length [m]
 b           = 0.25;      % Bridge point [m]
-n           = 50;       % Mesh size
+n           = 20;       % Mesh size
 modeCount   = 5;        % Number of displayed modes
 
 % Initial function: 
@@ -32,7 +32,7 @@ phi0 = x^2*(x-b)*((x-L)^4-x);
 % Create vector of test function polynomials and their derivatives
 syms phi_i(x)
 phi = sym(1:n);
-Dphi = sym(1:n);
+D2phi = sym(1:n);
 for i = 1:n
     fprintf('Creating test function %d\n', i);
     phi_i = phi0;
@@ -42,7 +42,7 @@ for i = 1:n
         end
     end
     phi(i) = phi_i;
-    Dphi(i) = diff(phi_i, x);                   % Find each function's derivative
+    D2phi(i) = diff(diff(phi_i, x),x);                   % Find each function's derivative
 end
 
 %% Building the Mass and Stiffness Matrices
@@ -55,7 +55,7 @@ K = M;
 for col = 1:n
     for row = 1:col
         M(row, col) = double(int(phi(row)  * phi(col),  [0, L]));
-        K(row, col) = double(int(Dphi(row) * Dphi(col), [0, L]));
+        K(row, col) = double(int(D2phi(row) * D2phi(col), [0, L]));
     end
     fprintf('Column %d of M and K matrices calculated\n', col);
 end
