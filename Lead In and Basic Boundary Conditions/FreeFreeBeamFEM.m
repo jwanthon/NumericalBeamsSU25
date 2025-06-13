@@ -1,6 +1,6 @@
 clc; clear all;
 addpath('Functions\');
-%% FFFFBeamFEM.m
+%% FreeFreeBeamFEM.m
 %  Joseph Anthony
 %
 % Created:         6/3/25
@@ -109,3 +109,92 @@ clear row col i j
 % Create a visual of the FEM matrix
 % fig2 = visual_sparseMatrix(FEM);
 % fig2.Title = "Free-Free FEM Matrix";
+
+return
+%% Alternate Attempt
+clc; clear all;
+addpath('Functions\');
+
+rho         = 7.85;     % Mass per unit length [kg/m]
+gamma       = 5.643;    % Flexural rigidity [N·m²]
+L           = 1;        % Beam length [m]
+n           = 50;       % Mesh size
+modeCount   = 5;        % Number of displayed modes
+distance = L/10;               % Set total length of test parabola
+
+deltax = L/(n+1);
+a = -4/distance^2;
+
+% Create vector of test functions
+syms phi_i(x)
+phi = sym(1:n);
+phi_i = 0;
+D2phi = sym(1:n);
+for i = 1:n
+    fprintf('Creating test function %d\n', i);
+    phi_i = piecewise((i*deltax - distance/2 < x) & (x < i*deltax + distance/2), a*(x-i*deltax)^2+1,0);
+    phi(i) = phi_i;
+    D2phi(i) = piecewise((i*deltax - distance/2 < x) & (x < i*deltax + distance/2), 2*a,0);
+end
+
+K = zeros(n, n);
+
+for col = 1:n
+    for row = 1:col
+        K(row, col) = double(int(D2phi(row) * D2phi(col), [0, L]));
+    end
+    fprintf('Column %d of K calculated. \n', col);
+end
+
+% Reflect upper triangles across the main diagonal and correct duplicate
+%   entries on the main diagonal
+K = K + K' - diag(diag(K));
+
+%% Working with FEM Matrix
+FEM = K;
+disp('FEM matrix built.');
+
+% Find and sort eigenvectors
+[eigVecs, eigVals] = eig(FEM);
+[d, index] = sort(diag(eigVals));
+eigVals = eigVals(index,index);
+eigVecs = eigVecs(:, index);
+eigVals = flip(flip(eigVals, 1), 2);
+eigVecs = flip(eigVecs, 1);
+
+step = distance/2/deltax;
+step = floor(step);
+
+% Determine the effect of each basis function on the beam
+beamBasis = zeros(n,n);
+for i = 1:n
+    j = max(1, i-step);
+    while j < min(n, i+step)
+        beamBasis(i,j) = (a*(deltax^2)*(j-i)^2+1)
+        j=j+1;
+    end
+end
+disp('Basis function string effects calculated.');
+beamBasis(:,n) = zeros(n,1);
+
+% Normalize the basis functions
+% for i = 1:n
+%     beamBasis(:,i) = beamBasis(:,i)/max(abs(beamBasis(:,i)));
+% end
+
+% Create the mode shapes by scaling the basis functions by each eigenvector
+modeShapes = beamBasis*eigVecs;
+disp('Mode shapes calculated.');
+
+% Plot modecount eigenvectors
+hold on;
+for i = 1:modeCount
+     plot(linspace(deltax,L-deltax,n),modeShapes(:,i)',"Marker",".")
+end
+title(sprintf('First %d Mode Shapes of a Free-Free Beam', modeCount));
+xlabel('Beam Position [m]');
+ylabel('Displacement [m]');
+hold off
+
+% Cleanup
+clear row col i j 
