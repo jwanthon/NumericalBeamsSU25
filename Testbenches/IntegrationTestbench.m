@@ -16,7 +16,7 @@ addpath('Functions\');
 % Required:
 %   Symbolic Math Toolbox           
 
-n = 30; % Mesh size
+n = 50; % Mesh size
 L = 10;  % Length  (L) [m]
 modeCount = 5;
 
@@ -57,18 +57,18 @@ timeit(f)
 % tic/toc: ~166.19 sec
 tic
 % Turn derivative functions into usable form for MATLAB
-ht = zeros(1,n);
-for i = 1:n
-    ht = matlabFunction(D2phi);
-end
+D2Basis = zeros(n,n);
 deltax = L/(n+1); 
+for i = 1:n
+    D2fn = matlabFunction(D2phi(i),x);
+    for j = 1:n
+        D2Basis(i,j) = D2fn(deltax*j);
+    end
+end
+
+toc
 xvals = linspace(deltax, n*deltax, n);
 
-% Determine the effect of each derivative function on the string
-DbeamBasis = zeros(n,n);
-for i = 1:n
-    DbeamBasis(i,:) = ht(deltax*i);
-end
 toc
 %% Generate Stiffness Matrix - Poly Method
 % Generate stiffness matrix by calculating coefficient vectors and 
@@ -157,17 +157,94 @@ title(sprintf('First %d Mode Shapes of a BI-BI Beam', modeCount));
 xlabel('Beam Position [m]');
 ylabel('Displacement [m]');
 hold off
-%% Integration vs Traps Values
+%% Integration vs Trapz Values
 syms testfn(x)
 testfn = 1;
+resolution = 10;
 for i = 1:3
     testfn = plus(testfn, rand*x^i);
 end
-val1 = int(testfn, [0,10])
+disp(testfn);
+val1 = int(testfn, [0,10]);
 ht = matlabFunction(testfn);
-fnout = zeros(1,10);
-for i = 1:100
-    fnout(i) = ht(i/10);
+fnout = zeros(1,resolution);
+for i = 1:resolution
+    fnout(i) = ht(10/resolution*i);
 end
-val2 = trapz(fnout, [0.1:0.1:10])
-diff = abs(val1-val2)
+val2 = trapz(fnout)/(resolution/10);
+diff = abs(val1-val2);
+fprintf("Val1 %d, Val2 %d, Diff %d", val1, val2, diff);
+return
+%% Numerical FEM Approach
+clc; clear all;
+n = 50;         % Mesh size, number of interior points
+shapes = 50;     % Number of shape functions, typically equal to n
+L = 1;          % Beam length
+modeCount = 5;  % Number of displayed modes
+
+xvals       = linspace(0,L,n+2);
+beamBasis   = zeros(shapes, n+2);
+DbeamBasis  = zeros(shapes,n+2);
+D2beamBasis = zeros(shapes,n+2);
+
+% Generate shape functions
+%   Current shape: equally spaced nodes x(x-L)(x-L/2) ...
+for i = 1:shapes
+    beamBasis(i,:) = xvals;
+    for j = 1:i
+        beamBasis(i,:) = beamBasis(i,:).*(xvals-j*L/i*ones(1,n+2));
+    end
+end
+
+
+% % See shape functions
+% hold on
+% for i = 1:modeCount
+%     plot(xvals,beamBasis(i,:));
+% end
+% return
+
+% Generate second derivatives
+for i = 1:shapes
+    DbeamBasis(i,:) = gradient(beamBasis(i,:),xvals);
+    D2beamBasis(i,:) = gradient(DbeamBasis(i,:),xvals);
+end
+
+% Build stiffness matrix
+K = zeros(shapes);
+for row = 1:shapes
+    for col = 1:row
+        product = D2beamBasis(row,:).*D2beamBasis(col,:);
+        K(row,col) = trapz(product(2:n+1),xvals(2:n+1));
+    end
+end
+K = K + K' - diag(diag(K));
+
+% Find and sort eigenbasis from lowest mode to highest
+[eigVecs, eigVals] = eig(K);
+[d, index] = sort(diag(abs(eigVals)));
+eigVals = eigVals(index,index);
+eigVecs = eigVecs(:, index);
+eigVals = flip(flip(eigVals, 1), 2);
+eigVecs = flip(eigVecs, 1);
+
+% Create the mode shapes by scaling the basis functions by each eigenvector
+modeShapes = beamBasis'*eigVecs;
+modeShapes = modeShapes';
+disp('Mode shapes calculated.');
+
+% Normalize eigenfunctions
+for i = 1:shapes
+    modeShapes(i,:) = modeShapes(i,:)/max(abs(modeShapes(i,:)));
+end
+
+% Plot modecount eigenvectors
+hold on;
+for i = 2:modeCount+1
+     plot(xvals,modeShapes(i,:),"Marker",".");
+end
+title(sprintf('First %d Mode Shapes of a BI-BI Beam', modeCount));
+xlabel('Beam Position [m]');
+ylabel('Displacement [m]');
+hold off
+
