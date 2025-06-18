@@ -178,15 +178,16 @@ return
 %% Numerical FEM Approach
 tic
 clc; clear all;
-n = 100;         % Mesh size, number of interior points
+n = 10000;         % Mesh size, number of interior points
 shapes = 50;     % Number of shape functions, typically equal to n
-L = 0.1;          % Beam length
+L = 1;          % Beam length
 modeCount = 3;  % Number of displayed modes
 
 xvals       = linspace(0,L,n+2);
 beamBasis   = zeros(shapes, n+2);
 DbeamBasis  = zeros(shapes,n+2);
 D2beamBasis = zeros(shapes,n+2);
+deltax      = L/(n+1);
 
 % Generate shape functions
 %   Current shape: equally spaced nodes x(x-L)(x-L/2) ...
@@ -198,7 +199,12 @@ for i = 1:shapes
 end
 
 
-% % See shape functions
+% Normalize basis functions
+for i = 1:shapes
+    beamBasis(i,:) = beamBasis(i,:)/max(abs(beamBasis(i,:)));
+end
+
+% See shape functions
 % hold on
 % for i = 1:modeCount
 %     plot(xvals,beamBasis(i,:));
@@ -215,20 +221,25 @@ end
 K = zeros(shapes);
 for row = 1:shapes
     for col = 1:row
-        product = D2beamBasis(row,:).*D2beamBasis(col,:);
-        K(row,col) = trapz(product(2:n+1),xvals(2:n+1));
+        product = DbeamBasis(row,:).*DbeamBasis(col,:);
+        K(row,col) = trapz(product);
     end
 end
 K = K + K' - diag(diag(K));
 
 % Find and sort eigenbasis from lowest mode to highest
 [eigVecs, eigVals] = eig(K);
-[d, index] = sort(diag(abs(eigVals))); % Sorts from highest mag to lowest
+[d, index] = sort(diag(abs(eigVals))); % Sort based on magnitude
 % [d, index] = sort(diag(eigVals));
 eigVals = eigVals(index,index);
 eigVecs = eigVecs(:, index);
-eigVals = flip(flip(eigVals, 1), 2);% Used to sort from small to large
-eigVecs = flip(eigVecs, 1);
+% eigVals = flip(flip(eigVals, 1), 2); % Enable to sort from large to small
+% eigVecs = flip(eigVecs, 1);
+
+% Display eigenvalues
+% plot(diag(abs(eigVals)), 'Marker','o', 'LineStyle', 'none');
+loglog(diag(abs(eigVals)), 'Marker','o', 'LineStyle', 'none');
+return
 
 % Create the mode shapes by scaling the basis functions by each eigenvector
 modeShapes = beamBasis'*eigVecs;
