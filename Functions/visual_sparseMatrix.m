@@ -2,7 +2,7 @@
 %  Joseph Anthony
 %
 % Created:         5/16/25
-% Last Modified:   5/16/25
+% Last Modified:   6/20/25
 %
 % Description: Creates a pre-formatted figure that plots the visuals for a
 %   sparse square matrix.
@@ -23,7 +23,7 @@ function fig = visual_sparseMatrix(matrix)
     % Format and rescale colormap
     colormap = importdata('colormap_sparse.mat');
     fig.Colormap = colormap;
-    [~, max] = bounds(matrix, "all");
+    [~, max] = bounds(abs(matrix), "all");
     fig.ColorLimits = [-abs(max), abs(max)];
 
     fig.GridVisible = "off";
