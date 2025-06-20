@@ -178,10 +178,10 @@ return
 %% Numerical FEM Approach
 tic
 clc; clear all;
-n = 10000;         % Mesh size, number of interior points
+n = 1000;         % Mesh size, number of interior points
 shapes = 50;     % Number of shape functions, typically equal to n
 L = 1;          % Beam length
-modeCount = 3;  % Number of displayed modes
+modeCount = 5;  % Number of displayed modes
 
 xvals       = linspace(0,L,n+2);
 beamBasis   = zeros(shapes, n+2);
@@ -192,16 +192,20 @@ deltax      = L/(n+1);
 % Generate shape functions
 %   Current shape: equally spaced nodes x(x-L)(x-L/2) ...
 for i = 1:shapes
-    beamBasis(i,:) = xvals;
+    beamBasis(i,:) = xvals.*xvals.*(xvals - L * ones(1, n+2));
     for j = 1:i
         beamBasis(i,:) = beamBasis(i,:).*(xvals-j*L/i*ones(1,n+2));
     end
 end
+%   Chebyshev Polynomials of the First Kind
+% for i = 1:shapes
+%     beamBasis(i,:) = chebyshevT(2*i-1, xvals);
+% end
 
-
-% Normalize basis functions
+% % Normalize and scale basis functions
 for i = 1:shapes
     beamBasis(i,:) = beamBasis(i,:)/max(abs(beamBasis(i,:)));
+    beamBasis(i,:) = beamBasis(i,:);
 end
 
 % See shape functions
@@ -221,7 +225,7 @@ end
 K = zeros(shapes);
 for row = 1:shapes
     for col = 1:row
-        product = DbeamBasis(row,:).*DbeamBasis(col,:);
+        product = D2beamBasis(row,:).*D2beamBasis(col,:);
         K(row,col) = trapz(product);
     end
 end
@@ -237,9 +241,11 @@ eigVecs = eigVecs(:, index);
 % eigVecs = flip(eigVecs, 1);
 
 % Display eigenvalues
-% plot(diag(abs(eigVals)), 'Marker','o', 'LineStyle', 'none');
-loglog(diag(abs(eigVals)), 'Marker','o', 'LineStyle', 'none');
-return
+% plot(log(diag(abs(eigVals))), 'Marker','o', 'LineStyle', 'none');
+% title(sprintf('Stiffness Matrix Eigenvalues for %d Shapes', shapes))
+% ylabel('Eigenvalue Magnitude (Log)');
+% % loglog(diag(abs(eigVals)), 'Marker','o', 'LineStyle', 'none');
+% return
 
 % Create the mode shapes by scaling the basis functions by each eigenvector
 modeShapes = beamBasis'*eigVecs;
@@ -256,7 +262,7 @@ hold on;
 for i = 1:modeCount
      plot(xvals,modeShapes(i,:),"Marker",".");
 end
-title(sprintf('First %d Mode Shapes of a Guitar String', modeCount));
+title(sprintf('First %d Mode Shapes of a BI-BI Beam', modeCount));
 xlabel('String Position [m]');
 ylabel('Relative Displacement');
 hold off
