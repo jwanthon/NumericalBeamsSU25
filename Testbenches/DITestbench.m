@@ -1,10 +1,10 @@
 clc; clear all;
 addpath('Functions\');
-%% DerivativeIntegrationTestbench.m
+%% DITestbench.m
 %  Joseph Anthony
 %
 % Created:         6/20/25
-% Last Modified:   6/20/25
+% Last Modified:   6/22/25
 %
 % Description: Testbench for different integration and derivation techniques 
 %   and their relative errors to determine what causes incorrect behaviors in
