@@ -19,5 +19,6 @@ Contains prebuilt matrices, colormaps, and other data that can be used in other 
 
 ## Testbenches
 Contains timed tests of different procedures used throughout the repository.
-- **FDMTestbench.m** tests different technniques for generating FDM matrices and installing boundary conditions on those matrices. It is currently outside of the project scope and is unused.
-- **IntegrationTestbench.m** tests different numerical integration techniques used for generating stiffness matrices for FEM modeling.
+- **FDMTestbench.m** tests different technniques for generating FDM matrices and installing boundary conditions on those matrices. It is **currently outside of the project scope and is unused**.
+- **FEMTestbench.m** tests different numerical techniques for generating stiffness matrices for FEM modeling.
+- **DITestbench.m** tests different derivation and integration techniques in MATLAB to determine which is most suitable for generating stiffness matrices.
