@@ -1,10 +1,10 @@
 clc; clear all;
 addpath('Functions\');
-%% IntegrationTestbench.m
+%% FEMTestbench.m
 %  Joseph Anthony
 %
 % Created:         5/29/25
-% Last Modified:   6/11/25
+% Last Modified:   6/22/25
 %
 % Description: Testbench for different integration techniques for 
 %   calculating FEM stiffness matrices with large quantities of basis 
@@ -268,3 +268,93 @@ ylabel('Relative Displacement');
 hold off
 
 toc
+%% Conditioning Testing
+% Finds the condition number of different sizes of FEM matrices using
+%   different shape function generators.
+clc; clear all;
+
+n = 2000;       % Mesh size, number of interior points
+shapes = 200;    % Number of shape functions, typically equal to n
+L = 1;          % Beam length
+modeCount = 5;  % Number of displayed modes
+
+xvals       = linspace(0,L,n+2);
+beamBasis   = zeros(shapes, n+2);
+DbeamBasis  = zeros(shapes,n+1);
+D2beamBasis = zeros(shapes,n);
+deltax      = L/(n+1);
+condnumbs_nodes = zeros(1, shapes);
+condnumbs_cheby = zeros(1, shapes);
+
+
+% Find conditioning for equally spaced zeros
+K = zeros(shapes);
+
+for i = 1:shapes
+
+    % Equally spaced zeros
+    beamBasis(i,:) = xvals.*xvals.*(xvals - L * ones(1, n+2));
+        for j = 1:i
+            beamBasis(i,:) = beamBasis(i,:).*(xvals-j*L/i*ones(1,n+2));
+        end
+
+    % Find current derivatives
+    DbeamBasis(i,:) = diff(beamBasis(i,:))/deltax;
+%   D2beamBasis(i,:) = diff(DbeamBasis(i,:))/deltax;
+
+    % Recalculate stiffness matrix                      NOTE: CAN BE REWORKED TO BE MUCH MORE EFFICIENT
+    for row = 1:i
+        for col = 1:row
+            product = DbeamBasis(row,:).*DbeamBasis(col,:);
+            K(row,col) = trapz(product);
+        end
+    end
+    K = K + K' - diag(diag(K));
+
+    % Find condition number of current stiffness matrix
+    [e_vecs, e_vals] = eig(K(1:i,1:i));
+    e_vals = log(abs(diag(e_vals)));
+    e_vals(e_vals == Inf | e_vals == -Inf) = 0;
+    condnumbs_nodes(i) = max(e_vals) - min(e_vals);
+
+end
+disp('Condition numbers for polys found.')
+
+% Find conditioning for Chebychev polys
+
+K = zeros(shapes);
+for i = 1:shapes
+
+    % Chebyshev polysof the first kind
+    beamBasis(i,:) = chebyshevT(2*i-1, xvals);
+
+    % Find current derivatives
+    DbeamBasis(i,:) = diff(beamBasis(i,:))/deltax;
+%   D2beamBasis(i,:) = diff(DbeamBasis(i,:))/deltax;
+
+    % Recalculate stiffness matrix                      NOTE: CAN BE REWORKED TO BE MUCH MORE EFFICIENT
+    for row = 1:i
+        for col = 1:row
+            product = DbeamBasis(row,:).*DbeamBasis(col,:);
+            K(row,col) = trapz(product);
+        end
+    end
+    K = K + K' - diag(diag(K));
+
+    % Find condition number of current stiffness matrix
+    [e_vecs, e_vals] = eig(K(1:i,1:i));
+    e_vals = log(abs(diag(e_vals)));
+    e_vals(e_vals == Inf | e_vals == -Inf) = 0;
+    condnumbs_cheby(i) = max(e_vals) - min(e_vals);
+
+end
+disp('Condition numbers for Chebys found.')
+
+figure()
+hold on;
+plot(1:shapes, condnumbs_nodes, "LineStyle","none","Marker", ".")
+plot(1:shapes, condnumbs_cheby, "LineStyle","none","Marker", ".")
+title("Stiffness Matrix Condition Numbers vs. Shape Functions")
+xlabel("# of Shape Functions")
+ylabel("Condition Number")
+legend("Polys with equally-spaced nodes", "Chebyshev polys of the first kind");
