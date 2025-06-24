@@ -1,13 +1,13 @@
 clc; clear all;
 addpath('Functions\');
-%% BIBIBeamFEM.m
+%% BIBIBeamSymbolicFEM.m
 %  Joseph Anthony
 %
 % Created:         5/19/25
-% Last Modified:   6/5/25
+% Last Modified:   6/24/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
-%   for built in-built in beam using FEM and determines the solution 
+%   for built in-built in beam using sybmolic FEM and determines the solution 
 %   structure.
 %
 % Required:
