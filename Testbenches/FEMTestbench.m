@@ -179,30 +179,48 @@ return
 tic
 clc; clear all;
 n = 1000;         % Mesh size, number of interior points
-shapes = 50;     % Number of shape functions, typically equal to n
+shapes = 100;     % Number of shape functions, typically equal to n
 L = 1;          % Beam length
 modeCount = 5;  % Number of displayed modes
 
 xvals       = linspace(0,L,n+2);
 beamBasis   = zeros(shapes, n+2);
-DbeamBasis  = zeros(shapes,n+2);
-D2beamBasis = zeros(shapes,n+2);
+DbeamBasis  = zeros(shapes,n+1);
+D2beamBasis = zeros(shapes,n);
 deltax      = L/(n+1);
 
 % Generate shape functions
-%   Current shape: equally spaced nodes x(x-L)(x-L/2) ...
-for i = 1:shapes
-    beamBasis(i,:) = xvals.*xvals.*(xvals - L * ones(1, n+2));
-    for j = 1:i
-        beamBasis(i,:) = beamBasis(i,:).*(xvals-j*L/i*ones(1,n+2));
-    end
-end
+%   Equally spaced nodes x(x-L)(x-L/2) ...
+% for i = 1:shapes
+%     beamBasis(i,:) = xvals.*xvals.*(xvals - L * ones(1, n+2)).^2;
+%     for j = 1:i
+%         beamBasis(i,:) = beamBasis(i,:).*(xvals-j*L/i*ones(1,n+2));
+%     end
+% end
 %   Chebyshev Polynomials of the First Kind
 % for i = 1:shapes
-%     beamBasis(i,:) = chebyshevT(2*i-1, xvals);
+%     beamBasis(i,:) = chebyshevT(2*i-1, xvals).*(xvals-L*ones(1,n+2));
 % end
+%   Sin(ix)
+for i = 1:shapes
+    beamBasis(i,:) = xvals*sin(pi*i*xvals/L);
+end
+%   Tents
+% for i = 1:shapes
+%     cent = i*L/(shapes+1);
+%     dist   = L/(shapes+1);          % Distance on the side of each tent function 
+%     for j = 1:length(xvals)
+%         if (xvals(j) >= cent - dist && xvals(j) <= cent)
+%             beamBasis(i, j) = dist*(xvals(j)-cent+dist);
+%         elseif (xvals(j) >= cent && xvals(j) <= dist+cent)
+%             beamBasis(i,j) = -dist*(xvals(j)-cent-dist);
+%         end
+%     end
+% end
+% beamBasis(:, 1) = zeros(shapes, 1);
+% beamBasis(:, end) = beamBasis(:, 1);
 
-% % Normalize and scale basis functions
+% Normalize and scale basis functions
 for i = 1:shapes
     beamBasis(i,:) = beamBasis(i,:)/max(abs(beamBasis(i,:)));
     beamBasis(i,:) = beamBasis(i,:);
@@ -210,22 +228,22 @@ end
 
 % See shape functions
 % hold on
-% for i = 1:modeCount
+% for i = 1:shapes
 %     plot(xvals,beamBasis(i,:));
 % end
 % return
 
 % Generate second derivatives
 for i = 1:shapes
-    DbeamBasis(i,:) = gradient(beamBasis(i,:),xvals);
-    D2beamBasis(i,:) = gradient(DbeamBasis(i,:),xvals);
+    DbeamBasis(i,:) = diff(beamBasis(i,:))/deltax;
+    D2beamBasis(i,:) = diff(DbeamBasis(i,:))/deltax;
 end
 
 % Build stiffness matrix
 K = zeros(shapes);
 for row = 1:shapes
     for col = 1:row
-        product = D2beamBasis(row,:).*D2beamBasis(col,:);
+        product = DbeamBasis(row,:).*DbeamBasis(col,:);
         K(row,col) = trapz(product);
     end
 end
@@ -234,11 +252,8 @@ K = K + K' - diag(diag(K));
 % Find and sort eigenbasis from lowest mode to highest
 [eigVecs, eigVals] = eig(K);
 [d, index] = sort(diag(abs(eigVals))); % Sort based on magnitude
-% [d, index] = sort(diag(eigVals));
 eigVals = eigVals(index,index);
 eigVecs = eigVecs(:, index);
-% eigVals = flip(flip(eigVals, 1), 2); % Enable to sort from large to small
-% eigVecs = flip(eigVecs, 1);
 
 % Display eigenvalues
 % plot(log(diag(abs(eigVals))), 'Marker','o', 'LineStyle', 'none');
@@ -257,24 +272,33 @@ for i = 1:shapes
     modeShapes(i,:) = modeShapes(i,:)/max(abs(modeShapes(i,:)));
 end
 
+figure()
 % Plot modecount eigenvectors
 hold on;
 for i = 1:modeCount
      plot(xvals,modeShapes(i,:),"Marker",".");
 end
-title(sprintf('First %d Mode Shapes of a BI-BI Beam', modeCount));
+title(sprintf('First %d Mode Shapes of a Guitar String', modeCount));
 xlabel('String Position [m]');
 ylabel('Relative Displacement');
 hold off
 
 toc
+% Graph Eigenvalues
+figure()
+eigplot = diag(eigVals);
+eigplot = eigplot/eigplot(1);
+rooteigplot = sqrt(eigplot');
+plot(rooteigplot, "LineStyle", "none", "Marker", ".");
+title("Square Roots of Eigenvalues");
+ylabel("sqrt(λ)")
 %% Conditioning Testing
 % Finds the condition number of different sizes of FEM matrices using
 %   different shape function generators.
 clc; clear all;
 
-n = 2000;       % Mesh size, number of interior points
-shapes = 200;    % Number of shape functions, typically equal to n
+n = 1000;       % Mesh size, number of interior points
+shapes = 100;    % Number of shape functions, typically equal to n
 L = 1;          % Beam length
 modeCount = 5;  % Number of displayed modes
 
