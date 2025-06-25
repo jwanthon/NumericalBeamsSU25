@@ -1,6 +1,6 @@
 clc; clear all;
 addpath('Functions\');
-%% FreeFreeBeamFEM.m
+%% FreeFreeBeamSymbolicFEM.m
 %  Joseph Anthony
 %
 % Created:         6/3/25

@@ -1,6 +1,6 @@
 clc; clear all;
 addpath('Functions\');
-%% BIBIBeamFEM.m
+%% BasicKalimbaSymbolicFEM.m
 %  Joseph Anthony
 %
 % Created:         5/20/25

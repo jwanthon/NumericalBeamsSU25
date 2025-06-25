@@ -1,6 +1,6 @@
 clc; clear all;
 addpath('Functions\');
-%% FixedFreeString.m
+%% FixedFreeStringFEM.m
 %  Joseph Anthony
 %
 % Created:         6/24/25
