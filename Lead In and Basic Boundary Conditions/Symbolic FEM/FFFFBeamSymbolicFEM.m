@@ -1,13 +1,13 @@
 clc; clear all;
 addpath('Functions\');
-%% FreeFreeBeamSymbolicFEM.m
+%% FFFFBeamSymbolicFEM.m
 %  Joseph Anthony
 %
 % Created:         6/3/25
-% Last Modified:   6/12/25
+% Last Modified:   7/7/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
-%   for a free-free freee- free beam using FEM and determines the solution 
+%   for a free-free free-free beam using FEM and determines the solution 
 %   structure.
 %
 % Required:
