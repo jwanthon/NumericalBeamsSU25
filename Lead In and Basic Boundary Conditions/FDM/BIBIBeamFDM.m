@@ -97,7 +97,7 @@ IC = zeros(2*n, 1);
 IC(1:n) = BIBIBeamICs(n, L, gamma, initDisp);
 scaledFDM = FDM * gamma / rho;
 
-[t,y] = ode45(@(t,y) odefcn_2order(t, y, scaledFDM), 0:timestep:timeMax, IC);
+[t,y] = ode45(@(t,y) odefcn_2orderFDM(t, y, scaledFDM), 0:timestep:timeMax, IC);
 nexttile;
 surf(1:n,t,y(:,1:n), "LineStyle","none");
 camlight('headlight');
