@@ -16,7 +16,7 @@ rho         = 7.85;     % Mass per unit length [kg/m]
 gamma       = 5.643;    % Flexural rigidity [N·m²]
 L           = 1;        % Beam length [m]
 n           = 1000;     % Mesh size, number of interior points
-shapes      = 20;      % Number of shape functions
+shapes      = 100;      % Number of shape functions
 modeCount   = 5;        % Number of displayed modes
 
 xvals = linspace(0,L,n+2);
@@ -43,6 +43,10 @@ D2beambasis = zeros(shapes, n);
 % end
 % 
 % beambasis = [flip(beambasis(:,(n/2+2):end),2), beambasis(:,(n/2+2):end)];
+
+for i = 1:shapes
+    beambasis(i,:) = (xvals-L/2*ones(1,n+2)).^(i-1);
+end
 
 % % Display shape functions
 % hold on
@@ -82,7 +86,7 @@ for i = 1:modeCount
 end
 xlabel("Beam Position [m]");
 ylabel("Relative Displacement");
-title("Mode Shapes of a Built In-Built In Beam");
+title("Mode Shapes of a Free Free-Free Free Beam");
 
 
 % Plot eigenvalue spectrum
@@ -93,5 +97,5 @@ scaled_espectrum = espectrum.^(1/4);
 
 hold on
 plot(scaled_espectrum, "LineStyle", "none", "Marker", ".");
-title("Adjusted BI-BI Eigenvalue Magnitudes");
+title("Adjusted FF-FF Eigenvalue Magnitudes");
 ylabel("Fourth Root of λ");
