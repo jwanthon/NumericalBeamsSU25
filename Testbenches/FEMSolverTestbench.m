@@ -75,16 +75,28 @@ for ind = 1:length(xvals)
         IC_string(ind) = -IC_disp/(L-IC_pos)*(xvals(ind)-IC_pos)+IC_disp;
     end
 end
+
 % Find closest shape vector
 IC_shapes = [lsqr(beamBasis', IC_string')', zeros(1,shapes)];
 
 [t,y] = ode89(@(t,y) odefcn_2orderFEM(t, y, K_scaled, M, beta), [0 timespan], IC_shapes);
+M_ode = [M, zeros(shapes);
+         zeros(shapes), zeros(shapes)];
+
+F = ode;
+F.InitialValue = IC_shapes;
+F.ODEFcn = @(t, y) [ y(shapes+1:end);
+                     K_scaled*y(1:shapes)];
+F.MassMatrix = odeMassMatrix(MassMatrix = M, Singular = "yes");
+
+solve(F, 0, timespan);
+
 
 % Convert from shape vector to displacement vector
-solution = y(:,1:shapes)*beamBasis;
+solution_string = solution_shape(:,1:shapes)*beamBasis;
 
 % Plot solution over time
-surf(xvals,t,solution, "LineStyle","none");
+surf(xvals,t,solution_string, "LineStyle","none");
 camlight('headlight');
 title('String Displacement over Time');
 xlabel('String Position [m]');

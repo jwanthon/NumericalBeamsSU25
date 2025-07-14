@@ -45,7 +45,7 @@ D2beambasis = zeros(shapes, n);
 % beambasis = [flip(beambasis(:,(n/2+2):end),2), beambasis(:,(n/2+2):end)];
 
 for i = 1:shapes
-    beambasis(i,:) = (xvals-L/2*ones(1,n+2)).^(i-1);
+    beambasis(i,:) = sin(i*pi*xvals);
 end
 
 % % Display shape functions
@@ -96,6 +96,6 @@ espectrum = abs(diag(evals))/abs(evals(1,1));
 scaled_espectrum = espectrum.^(1/4);
 
 hold on
-plot(scaled_espectrum, "LineStyle", "none", "Marker", ".");
+plot(scaled_espectrum(1:50), "LineStyle", "none", "Marker", ".");
 title("Adjusted FF-FF Eigenvalue Magnitudes");
 ylabel("Fourth Root of λ");
