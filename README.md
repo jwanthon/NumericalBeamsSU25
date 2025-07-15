@@ -1,5 +1,9 @@
 # NumericalBeamsSU25
-Numerical models and analysis for beam vibrations, with the goal of modeling how to tune beams on a marimba through carving different cross-sectional profiles.
+Numerical models and analysis for beam vibrations, with the goal of writing a COMAP paper describing the harmonics of a kalimba by adjusting various parameter.
+
+## Mathematica Files
+Includes Mathematica files used to verify and test certain analytic solutions of problems such as completeness of FEM. Much of this content was created by my professor, Dr. Allan Struthers.
+- **FEMBasisAnalysis.nb** involves analytical analysis of the completeness of different types of FEM bases for both wave and beam problems. Note that much of this file was written by Dr. Struthers.
 
 ## Lead In and Basic Boundary Conditions
 Includes MATLAB scripts which simulate basic boundary and initial conditions for guitar strings and beams. Solution approaches involve finite difference methods (FDM) and finite element methods (FEM).  
@@ -19,6 +23,7 @@ The following files use **Numeric FEM** approaches, where FEM is conducted using
 - **FixedFreeStringFEM.m** uses FEM modeling to determine the mode shapes of a "fixed-free" string. Its **assumptions are incorrect and thus unused.**
 - **BIBIBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-built in beam.
 - **FFFFBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a free free-free free beam.
+- **PiecewiseBeamNumericFEM.m** uses numeric FEM modeling to determine if different types of piecewise functions are complete enough to model for beam problems.
   
 ## Functions
 Contains MATLAB functions scripts used in other .m files throughout the repository.
