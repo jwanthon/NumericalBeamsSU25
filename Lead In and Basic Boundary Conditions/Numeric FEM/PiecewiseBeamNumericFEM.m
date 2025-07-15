@@ -4,63 +4,88 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         7/14/25
-% Last Modified:   7/14/25
+% Last Modified:   7/15/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for a built in-built in beam using numeric FEM and with different types
 %   of piecewise functions.
 
-n = 1000;       % Mesh size, number of interior points
-types = 2;      % Number of types of shape functions; normally set to 2
-L = pi;         % Beam length
+n = 10000;       % Mesh size, number of interior points
+shapes = 100;     % Number of shape functions used
+L = 1;         % Beam length
 modeCount = 5;  % Number of displayed modes
-piecemesh = 100; % Piecewise mesh size, number of points spanned
 
-%% Generate # of types of piecewise functions
+%% Generate Different Bases
 xvals = linspace(0,L,n+2);
 deltax = mean(diff(xvals));
-h = piecemesh/2
+h = L/(shapes+1);
 
 % Type 1, Hump: x²(x-2h)²(1/h⁴)
-hump = zeros(1, piecemesh);
-for i = 1:piecemesh
-    hump(i) = xvals(i)^2*(xvals(i)-xvals(2*h))^2/(xvals(h)^4);
+hump_basis = zeros(shapes,n+2);
+hump_Dbasis = zeros(shapes, n+1);
+hump_D2basis = zeros(shapes,n);
+
+for i = 1:shapes
+    x0 = (i-1)*L/(shapes+1);
+    for j = 1:length(xvals)
+        x = xvals(j);
+        if (i-1)*h < x && x < (i+1)*h
+            hump_basis(i,j) = (x-x0)^2*(x-x0-2*h)^2/h^4;
+        end
+    end
 end
 
 % Type 2, Wiggle:  x²(x-2h)²(x/h⁴-1/h³)
-wiggle = zeros(1, piecemesh);
-for i = 1:piecemesh
-    wiggle(i) = xvals(i)^2*(xvals(i)-xvals(2*h))^2*(xvals(i)/xvals(h)^4-1/xvals(h)^3);
-end
+wigg_basis = zeros(shapes,n+2);
+wigg_Dbasis = zeros(shapes, n+1);
+wigg_D2basis = zeros(shapes,n);
 
-%% Populate basis functions (TODO: MAKE VAR NAMING MORE DESCRIPTIVE)
-shapes = types*(n+2-piecemesh);
-beambasis = zeros(shapes,n+2);
-
-for i = 1:shapes/types+1
-    beambasis(i, i:i+piecemesh-1) = hump;
-end
-
-for i = 1:shapes/types+1
-    beambasis(i+shapes/types, i:i+piecemesh-1) = wiggle;
-end
-
-Dbeambasis = zeros(shapes,n+1);
-D2beambasis = zeros(shapes, n);
 for i = 1:shapes
-    Dbeambasis(i,:) = diff(beambasis(i,:))/deltax;
-    D2beambasis(i,:) = diff(Dbeambasis(i,:))/deltax;
-end
-
-
-% Generate symmetric stiffness matrices
-K = zeros(length(beambasis));
-
-for row = 1:shapes
-    for col = 1:row
-        K(row,col) = trapz(xvals(2:end-1), D2beambasis(row,:).*D2beambasis(col,:));
+    x0 = (i-1)*L/(shapes+1);
+    for j = 1:length(xvals)
+        x = xvals(j);
+        if (i-1)*h < x && x < (i+1)*h
+            wigg_basis(i,j) = (x-x0)^2*(x-x0-2*h)^2*(1/h^4*(x-x0)-1/h^3);
+        end
     end
 end
+hold on
+% Generate derivatives
+for i = 1:shapes
+    hump_Dbasis(i,:) = diff(hump_basis(i,:))/deltax;
+    hump_D2basis(i,:) = diff(hump_Dbasis(i,:))/deltax;
+    wigg_Dbasis(i,:) = diff(wigg_basis(i,:))/deltax;
+    wigg_D2basis(i,:) = diff(wigg_Dbasis(i,:))/deltax;
+end  
+
+beambasis = [hump_basis ; wigg_basis];
+
+%% Build Stiffness Matrix
+
+% Hump submatrix
+hump_K = zeros(shapes);
+for row = 1:shapes
+    for col = 1:row
+        hump_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
+        
+    end
+end
+
+% Wiggle submatrix
+wigg_K = zeros(shapes);
+for row = 1:shapes
+    for col = 1:row
+        wigg_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
+        
+    end
+end
+
+% % Build the full matrix
+% K = [hump_K,        zeros(shapes);
+%      zeros(shapes), wigg_K];
+
+K = wigg_K;
+
 K = K + K' - diag(diag(K));
 
 % Determine sorted eigenbasis
@@ -69,8 +94,11 @@ K = K + K' - diag(diag(K));
 evals = evals(index,index);
 evecs = evecs(:, index);
 
-% Display mode shapes
-modeshapes = beambasis'*evecs;
+% % Display mode shapes
+% modeshapes = beambasis'*evecs;
+% modeshapes = modeshapes';
+
+modeshapes = wigg_basis'*evecs
 modeshapes = modeshapes';
 
 for i = 1:modeCount
