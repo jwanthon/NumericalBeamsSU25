@@ -24,6 +24,7 @@ The following files use **Numeric FEM** approaches, where FEM is conducted using
 - **BIBIBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-built in beam.
 - **FFFFBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a free free-free free beam.
 - **PiecewiseBeamNumericFEM.m** uses numeric FEM modeling to determine if different types of piecewise functions are complete enough to model for beam problems.
+- **KalimbaNumericFEM.m** uses numeric FEM modeling to determine the mode shapes for a kalimba.
   
 ## Functions
 Contains MATLAB functions scripts used in other .m files throughout the repository.
