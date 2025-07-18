@@ -1,17 +1,17 @@
-clc; clear all;
+% clc; clear all;
 addpath('Functions\');
 %% PiecewiseBeamNumericFEM.m
 %  Joseph Anthony
 %
 % Created:         7/14/25
-% Last Modified:   7/15/25
+% Last Modified:   7/18/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for a built in-built in beam using numeric FEM and with different types
 %   of piecewise functions.
 
-n = 10000;       % Mesh size, number of interior points
-shapes = 100;     % Number of shape functions used
+n = 20;       % Mesh size, number of interior points
+shapes = 20;     % Number of shape functions used
 L = 1;         % Beam length
 modeCount = 5;  % Number of displayed modes
 
@@ -50,7 +50,15 @@ for i = 1:shapes
     end
 end
 hold on
-% Generate derivatives
+% Generate derivatives and normalize basis functions
+for i = 1:shapes
+    hump_basis(i,:) = hump_basis(i,:)/max(abs(hump_basis(i,:)));
+    wigg_basis(i,:) = wigg_basis(i,:)/max(abs(wigg_basis(i,:)));
+end
+
+hump_basis(isnan(hump_basis)) = 0;
+wigg_basis(isnan(wigg_basis)) = 0;
+
 for i = 1:shapes
     hump_Dbasis(i,:) = diff(hump_basis(i,:))/deltax;
     hump_D2basis(i,:) = diff(hump_Dbasis(i,:))/deltax;
@@ -59,55 +67,63 @@ for i = 1:shapes
 end  
 
 beambasis = [hump_basis ; wigg_basis];
+D2basis = [hump_D2basis ; wigg_D2basis];
 
 %% Build Stiffness Matrix
 
 % Hump submatrix
-hump_K = zeros(shapes);
-for row = 1:shapes
-    for col = 1:row
-        hump_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
-        
-    end
-end
-
-% Wiggle submatrix
-wigg_K = zeros(shapes);
-for row = 1:shapes
-    for col = 1:row
-        wigg_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
-        
-    end
-end
-
+% hump_K = zeros(shapes);
+% for row = 1:shapes
+%     for col = 1:row
+%         hump_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
+% 
+%     end
+% end
+% 
+% % Wiggle submatrix
+% wigg_K = zeros(shapes);
+% for row = 1:shapes
+%     for col = 1:row
+%         wigg_K(row,col) = trapz(xvals(2:end-1), hump_D2basis(row,:).*hump_D2basis(col,:));
+% 
+%     end
+% end
+% 
 % % Build the full matrix
 % K = [hump_K,        zeros(shapes);
 %      zeros(shapes), wigg_K];
+% 
+% K = K + K' - diag(diag(K));
 
-K = wigg_K;
+% Build the full matrix
+K = zeros(2*shapes);
+for row = 1:(2*shapes)
+    for col = 1:(2*shapes)
+        K(row,col) = trapz(xvals(2:end-1), D2basis(row,:).*D2basis(col,:));
+    end
+end
+% K = K + K' - diag(diag(K));
 
-K = K + K' - diag(diag(K));
+%%
+K(shapes+1:2*shapes, 1:shapes) = zeros(shapes);
+K(1:shapes, shapes+1:2*shapes) = zeros(shapes);
 
+%%
+K = SYMBOLIC_K
 % Determine sorted eigenbasis
 [evecs, evals] = eig(K);
 [~, index] = sort(diag(abs(evals))); 
 evals = evals(index,index);
 evecs = evecs(:, index);
 
-% % Display mode shapes
-% modeshapes = beambasis'*evecs;
-% modeshapes = modeshapes';
-
-modeshapes = wigg_basis'*evecs
+% Display mode shapes
+modeshapes = beambasis'*evecs;
 modeshapes = modeshapes';
-
-for i = 1:modeCount
-    modeshapes(i,:) = modeshapes(i,:)/max(abs(modeshapes(i,:)));
-end
 
 figure();
 hold on
-for i = 1:modeCount
+for i = [1, 4, 6, 7, 9]
+    modeshapes(i,:) = modeshapes(i,:)/max(abs(modeshapes(i,:)));
     plot(xvals, modeshapes(i,:));
 end
 xlabel("Beam Position [m]");
@@ -125,3 +141,11 @@ hold on
 plot(scaled_espectrum, "LineStyle", "none", "Marker", ".");
 title("Adjusted BI-BI Eigenvalue Magnitudes");
 ylabel("Fourth Root of λ");
+
+% [1, 4, 6, 7, 9]
+% [2, 3, 5, 8, 10]
+
+figure();
+fig2 = visual_sparseMatrix(K);
+
+%%
