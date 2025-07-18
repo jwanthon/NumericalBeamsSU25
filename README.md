@@ -13,11 +13,12 @@ The following files use **FDM** approaches:
 - **GuitarStringsFDM.m** contains FDM modeling of a guitar string.
 - **BIBIBeamFDM.m** contains FDM modeling of a built in-built in beam.
 
-The following files use **Symbolic FEM** approaches, where FEM techniques are used in conjunction with MATLAB's Symbolic Math Toolbox
+The following files use **Symbolic FEM** (or analytic FEM) approaches, where FEM techniques are used in conjunction with MATLAB's Symbolic Math Toolbox
 - **GuitarStringsSymbolicFEM.m** uses symbolic FEM modeling to determine the mode shapes of a guitar string.
 - **BIBIBeamSymbolicFEM.m** uses symbolic FEM modeling to determine the mode shapes of a built in-built in beam.
 - **FFFFBeamSymbolicFEM.m** uses symbolic FEM modeling to determine the mode shapes of a free free-free free beam. Its **solution approach is currently incorrect.**
 - **BasicKailmbaSymbolicFEM.m** uses symbolic FEM modeling to determine the mode shapes of a basic kalimba.
+- **PiecewiseBeamSymbolicFEM.m** uses symbolic FEM modeling to determine if different types of piecewise functions are complete enough to model for beam problems, and to compare to the numeric approach.
 
 The following files use **Numeric FEM** approaches, where FEM is conducted using strictly numerical techniques without leveraging any MATLAB toolboxes:
 - **FixedFreeStringFEM.m** uses FEM modeling to determine the mode shapes of a "fixed-free" string. Its **assumptions are incorrect and thus unused.**
