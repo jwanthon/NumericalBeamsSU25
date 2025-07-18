@@ -102,3 +102,58 @@ title('String Displacement over Time');
 xlabel('String Position [m]');
 ylabel('Time [sec]');
 zlabel('Displacement [m]');
+
+
+%% Troubleshooting w/ String FDM Matrix
+clc; clear all;
+addpath('Functions\');
+
+n = 100;
+rho = 1;                         
+T   = 1;                     
+L   = 1; 
+beta = 10000;
+IC_pos = 0.1;
+IC_disp = 0.1;
+timespan = 100;
+
+factor = 1;
+
+% Generate FDM matrix
+deltax  = L/(n+1);
+xvals = deltax:deltax:(L-deltax);
+% temp1   = repmat(2, n, 1);
+% temp2   = repmat(-1, n-1, 1);
+% FDM       = diag(temp1) + diag(temp2, 1) + diag(temp2, -1);
+% scaledFDM = -T / (rho * deltax^2) * FDM;
+
+%%
+%%
+%% CHANGE IC TO THE EXPECTED ONE FOR THE BI-BI AND RETEST
+%%
+%%
+
+FDM = diag(repmat(-4, n-1, 1), 1) + diag(ones(n-2, 1), 2);
+FDM = FDM + FDM';
+FDM = FDM + diag(repmat(6, n, 1));
+FDM(1,1) = 7;
+FDM(n,n) = 7;
+scaledFDM = FDM / factor;
+
+% Solve ODE K.u = K.u'' + βu'
+IC_string = zeros(1,2*n);
+for i = 1:n
+    if xvals(i) < IC_pos
+        IC_string(i) = IC_disp/IC_pos*xvals(i);
+    else
+        IC_string(i) = -IC_disp/(L-IC_pos)*(xvals(i)-IC_pos)+IC_disp;
+    end
+end
+
+[t,y] = ode45(@(t,y) odefcn_2orderFDM(t, y, scaledFDM, beta), [0 timespan], IC_string);
+
+surf(xvals,t,y(:,1:100), "LineStyle","none");
+title('String Displacement over Time');
+xlabel('String Position [m]');
+ylabel('Time [sec]');
+zlabel('Displacement [m]');
