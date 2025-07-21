@@ -1,17 +1,17 @@
-% clc; clear all;
+clc; clear all;
 addpath('Functions\');
 %% PiecewiseBeamNumericFEM.m
 %  Joseph Anthony
 %
 % Created:         7/14/25
-% Last Modified:   7/18/25
+% Last Modified:   7/21/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for a built in-built in beam using numeric FEM and with different types
 %   of piecewise functions.
 
-n = 20;       % Mesh size, number of interior points
-shapes = 20;     % Number of shape functions used
+n = 1000;       % Mesh size, number of interior points
+shapes = 100;     % Number of shape functions used
 L = 1;         % Beam length
 modeCount = 5;  % Number of displayed modes
 
@@ -49,15 +49,15 @@ for i = 1:shapes
         end
     end
 end
-hold on
-% Generate derivatives and normalize basis functions
-for i = 1:shapes
-    hump_basis(i,:) = hump_basis(i,:)/max(abs(hump_basis(i,:)));
-    wigg_basis(i,:) = wigg_basis(i,:)/max(abs(wigg_basis(i,:)));
-end
+wigg_basis = wigg_basis / (16*h/(25*sqrt(5)));
 
-hump_basis(isnan(hump_basis)) = 0;
-wigg_basis(isnan(wigg_basis)) = 0;
+% Generate derivatives and normalize basis functions
+% for i = 1:shapes
+%     if(max(abs(wigg_basis(i,:))) ~= 1)
+%         disp(max(abs(wigg_basis(i,:))));
+%     end
+%     % wigg_basis(i,:) = wigg_basis(i,:)/max(abs(wigg_basis(i,:)));
+% end
 
 for i = 1:shapes
     hump_Dbasis(i,:) = diff(hump_basis(i,:))/deltax;
@@ -105,11 +105,6 @@ end
 % K = K + K' - diag(diag(K));
 
 %%
-K(shapes+1:2*shapes, 1:shapes) = zeros(shapes);
-K(1:shapes, shapes+1:2*shapes) = zeros(shapes);
-
-%%
-K = SYMBOLIC_K
 % Determine sorted eigenbasis
 [evecs, evals] = eig(K);
 [~, index] = sort(diag(abs(evals))); 
@@ -122,7 +117,7 @@ modeshapes = modeshapes';
 
 figure();
 hold on
-for i = [1, 4, 6, 7, 9]
+for i = 1:modeCount
     modeshapes(i,:) = modeshapes(i,:)/max(abs(modeshapes(i,:)));
     plot(xvals, modeshapes(i,:));
 end
@@ -147,5 +142,15 @@ ylabel("Fourth Root of λ");
 
 figure();
 fig2 = visual_sparseMatrix(K);
+fig2.Title = 'Stiffness Matrix';
 
-%%
+figure();
+fig3 = visual_sparseMatrix(evecs);
+fig3.Title = 'Matrix of Column Eigenvectors'
+
+error = [evecs(1:shapes,1:shapes) - evecs(shapes+1:end, shapes+1:end),
+         evecs(shapes+1:end,1:shapes) - evecs(1:shapes,shapes+1:end)];
+
+figure();
+fig4 = visual_sparseMatrix(error)
+fig4.Title = 'Relative Error Between Evec Components'
