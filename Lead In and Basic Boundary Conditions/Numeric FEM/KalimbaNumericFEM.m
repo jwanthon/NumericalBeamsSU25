@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         7/16/25
-% Last Modified:   7/16/25
+% Last Modified:   7/18/25
 %
 % Description: Numerically solves the Euler-Bernoulli beam equation 
 %   for a kalimba using numeric FEM and with piecewise functions.
@@ -36,6 +36,10 @@ D2basis = zeros(shapes,n);
 %     end
 %     basis(i,:) = basis(i,:) .* (xvals - a*ones(1,n+2));
 % end
+
+for i = 1:shapes
+    basis(i,:) = sin(i^2.*xvals).*(xvals-a*ones(1,n+2));
+end
 
 
 % Generate derivatives
@@ -88,3 +92,60 @@ hold on
 plot(scaled_espectrum, "LineStyle", "none", "Marker", ".");
 title("Adjusted Kalimba Eigenvalue Magnitudes");
 ylabel("Fourth Root of λ");
+
+return
+%% Recompute FEM for different values a
+% Basis = sin(i²x)(x-a)
+
+n = 10000;         % Mesh size, number of interior points
+shapes = 100;      % Number of shape functions used
+L = 1;             % Beam length
+spectra = 100;      % Number of evalue spectra to comkpute
+a_vec = linspace(L/(spectra+1), L-L/(spectra+1), spectra); % All positions of the simple support
+
+xvals = linspace(0,L,n+2);
+deltax = mean(diff(xvals));
+
+basis = zeros(shapes,n+2);
+Dbasis = zeros(shapes, n+1);
+D2basis = zeros(shapes,n);
+
+for iteration = 1:length(a_vec)
+    
+    a = a_vec(iteration);
+
+    for i = 1:shapes
+        basis(i,:) = sin(i^2.*xvals).*(xvals-a*ones(1,n+2));
+    end
+    
+    % Generate derivatives
+    for i = 1:shapes
+        Dbasis(i,:) = diff(basis(i,:))/deltax;
+        D2basis(i,:) = diff(Dbasis(i,:))/deltax;
+    end  
+    
+    % Build K
+    K = zeros(shapes);
+    for row = 1:shapes
+        for col = 1:row
+            K(row,col) = trapz(xvals(2:end-1), D2basis(row,:).*D2basis(col,:));
+            
+        end
+    end
+    
+    K = K + K' - diag(diag(K));
+    
+    % Determine sorted eigenbasis
+    [evecs, evals] = eig(K);
+    [~, index] = sort(diag(abs(evals))); 
+    evals = evals(index,index);
+    evecs = evecs(:, index);
+    
+    % Find eigenvalue spectrum
+    espectrum = abs(diag(evals))/abs(evals(1,1));
+    scaled_espectrum = espectrum.^(1/4);
+
+    all_spectrums(iteration,:) = scaled_espectrum;
+end
+
+surf(all_spectrums);
