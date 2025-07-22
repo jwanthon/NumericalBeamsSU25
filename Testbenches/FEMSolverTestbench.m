@@ -4,7 +4,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:          7/8/25
-% Last Modified:    7/8/25
+% Last Modified:    7/22/25
 %
 % Description: Testbench for solving the string and beam equation PDEs in
 %   the time-domain using linear ODE solver tools and by implementing
@@ -24,21 +24,22 @@ L = 1;            % String length
 T = 1;            % String tension
 rho = 1;          % String mass per unit length
 
-beta = 1000;        % Linear damping coefficient
+beta = 10;        % Linear damping coefficient
 IC_disp = .1;     % IC: Displacement [m]
 IC_pos = .6;      % IC: Where displacement is located [m]
-timespan = 1;     % Maximum time value, [s]
+timespan = 10;     % Maximum time value, [s]
 
 xvals       = linspace(0,L,n+2);
-beamBasis   = zeros(shapes, n+2);
-DbeamBasis  = zeros(shapes,n+1);
+basis       = zeros(shapes, n+2);
+Dbasis      = zeros(shapes,n+1);
+D2basis     = zeros(shapes, n);
 deltax      = L/(n+1);
 
 % Create FEM Matrix
 % Generate sinusoidal shape functions
 for i = 1:shapes
-    beamBasis(i,:) = sin(pi*i*xvals/L);
-    DbeamBasis(i,:) = diff(beamBasis(i,:))/deltax;
+    basis(i,:) = sin(pi*i*xvals/L);
+    Dbasis(i,:) = diff(basis(i,:))/deltax;
 end
 
 % Build stiffness matrix
@@ -46,9 +47,9 @@ K = zeros(shapes);
 M = zeros(shapes);
 for row = 1:shapes
     for col = 1:row
-        product = DbeamBasis(row,:).*DbeamBasis(col,:);
+        product = Dbasis(row,:).*Dbasis(col,:);
         K(row,col) = trapz(product);
-        M(row, col) = trapz(beamBasis(row,:).*beamBasis(col,:));
+        M(row, col) = trapz(basis(row,:).*basis(col,:));
     end
 end
 K = K + K' - diag(diag(K));
@@ -61,12 +62,12 @@ eigVals = eigVals(index,index);
 eigVecs = eigVecs(:, index);
 
 % Create the mode shapes by scaling the basis functions by each eigenvector
-modeShapes = beamBasis'*eigVecs;
+modeShapes = basis'*eigVecs;
 modeShapes = modeShapes';
 
 % Solve time-domain solution
 % Install ICs
-K_scaled = K * T / rho;
+K_scaled = -K * T / rho;
 IC_string = xvals;
 for ind = 1:length(xvals)
     if xvals(ind) < IC_pos
@@ -77,23 +78,13 @@ for ind = 1:length(xvals)
 end
 
 % Find closest shape vector
-IC_shapes = [lsqr(beamBasis', IC_string')', zeros(1,shapes)];
+IC_shapes = [lsqr(basis', IC_string')', zeros(1,shapes)];
 
-[t,y] = ode89(@(t,y) odefcn_2orderFEM(t, y, K_scaled, M, beta), [0 timespan], IC_shapes);
-M_ode = [M, zeros(shapes);
-         zeros(shapes), zeros(shapes)];
-
-F = ode;
-F.InitialValue = IC_shapes;
-F.ODEFcn = @(t, y) [ y(shapes+1:end);
-                     K_scaled*y(1:shapes)];
-F.MassMatrix = odeMassMatrix(MassMatrix = M, Singular = "yes");
-
-solve(F, 0, timespan);
+[t,y] = ode45(@(t,y) odefcn_2orderFEM(t, y, K_scaled, M, beta), [0 timespan], IC_shapes);
 
 
 % Convert from shape vector to displacement vector
-solution_string = solution_shape(:,1:shapes)*beamBasis;
+solution_string = y(:,1:shapes)*basis;
 
 % Plot solution over time
 surf(xvals,t,solution_string, "LineStyle","none");
@@ -103,21 +94,21 @@ xlabel('String Position [m]');
 ylabel('Time [sec]');
 zlabel('Displacement [m]');
 
-
+return
 %% Troubleshooting w/ String FDM Matrix
 clc; clear all;
 addpath('Functions\');
 
-n = 100;
+n = 50;
 rho = 1;                         
 T   = 1;                     
 L   = 1; 
-beta = 10000;
+beta = 0.2;
 IC_pos = 0.1;
 IC_disp = 0.1;
-timespan = 100;
+timespan = 10;
 
-factor = 1;
+factor = 1000;
 
 % Generate FDM matrix
 deltax  = L/(n+1);
@@ -127,18 +118,15 @@ xvals = deltax:deltax:(L-deltax);
 % FDM       = diag(temp1) + diag(temp2, 1) + diag(temp2, -1);
 % scaledFDM = -T / (rho * deltax^2) * FDM;
 
-%%
-%%
-%% CHANGE IC TO THE EXPECTED ONE FOR THE BI-BI AND RETEST
-%%
-%%
 
 FDM = diag(repmat(-4, n-1, 1), 1) + diag(ones(n-2, 1), 2);
 FDM = FDM + FDM';
 FDM = FDM + diag(repmat(6, n, 1));
 FDM(1,1) = 7;
 FDM(n,n) = 7;
-scaledFDM = FDM / factor;
+scaledFDM = -FDM * factor;
+
+disp('FDM matrix generated.')
 
 % Solve ODE K.u = K.u'' + βu'
 IC_string = zeros(1,2*n);
@@ -150,10 +138,14 @@ for i = 1:n
     end
 end
 
+disp('ICs generated.')
+
 [t,y] = ode45(@(t,y) odefcn_2orderFDM(t, y, scaledFDM, beta), [0 timespan], IC_string);
 
-surf(xvals,t,y(:,1:100), "LineStyle","none");
-title('String Displacement over Time');
+disp('System solved.')
+
+surf(xvals,t,y(:,1:n), "LineStyle","none");
+title('Sring Displacement over Time');
 xlabel('String Position [m]');
 ylabel('Time [sec]');
 zlabel('Displacement [m]');
