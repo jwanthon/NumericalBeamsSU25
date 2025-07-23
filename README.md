@@ -22,10 +22,10 @@ The following files use **Symbolic FEM** (or analytic FEM) approaches, where FEM
 
 The following files use **Numeric FEM** approaches, where FEM is conducted using strictly numerical techniques without leveraging any MATLAB toolboxes:
 - **FixedFreeStringFEM.m** uses FEM modeling to determine the mode shapes of a "fixed-free" string. Its **assumptions are incorrect and thus unused.**
-- **BIBIBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-built in beam.
+- **BIBIBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-built in beam, along with a time-domain solver.
 - **FFFFBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a free free-free free beam.
 - **PiecewiseBeamNumericFEM.m** uses numeric FEM modeling to determine if different types of piecewise functions are complete enough to model for beam problems.
-- **KalimbaNumericFEM.m** uses numeric FEM modeling to determine the mode shapes for a kalimba.
+- **KalimbaNumericFEM.m** uses numeric FEM modeling to determine the mode shapes for a kalimba, along with a time-domain solver.
   
 ## Functions
 Contains MATLAB functions scripts used in other .m files throughout the repository.
