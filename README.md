@@ -21,7 +21,8 @@ The following files use **Symbolic FEM** (or analytic FEM) approaches, where FEM
 - **PiecewiseBeamSymbolicFEM.m** uses symbolic FEM modeling to determine if different types of piecewise functions are complete enough to model for beam problems, and to compare to the numeric approach.
 
 The following files use **Numeric FEM** approaches, where FEM is conducted using strictly numerical techniques without leveraging any MATLAB toolboxes:
-- **FixedFreeStringFEM.m** uses FEM modeling to determine the mode shapes of a "fixed-free" string. Its **assumptions are incorrect and thus unused.**
+- **FixedFreeStringFEM.m** uses numeric FEM modeling to determine the mode shapes of a string with Dirichlet-Nuemann boundary conditions.
+- **DNStringNumericFEM.m** uses FEM modeling to determine the mode shapes of a "fixed-free" string. Its **assumptions are incorrect and thus unused.**
 - **BIBIBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-built in beam, along with a time-domain solver.
 - **BISSBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-simply supported beam, along with a time-domain solver.
 - **BIFFBeamNumericFEM.m** uses numeric FEM modeling to determine the mode shapes and eigenstructure of a built in-free freebeam, along with a time-domain solver.
