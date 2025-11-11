@@ -150,7 +150,7 @@ D2basis = zeros(shapes, n);
 
 % Generate shape functions and their respective derivatives
 for i = 1:shapes
-    basis(i,:) = xvals.^1.1.*cos(i*xvals*pi);
+    basis(i,:) = xvals.*sin((2*i+1)*pi/2*xvals);
     Dbasis(i,:) = diff(basis(i,:))/deltax;
     D2basis(i,:) = diff(Dbasis(i,:))/deltax;
 end
