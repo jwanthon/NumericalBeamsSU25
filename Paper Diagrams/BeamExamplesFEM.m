@@ -4,8 +4,8 @@ addpath('Functions\');
 %% BeamExamplesFEM.m
 %  Joseph Anthony
 %
-% Created:         11/08/25
-% Last Modified:   11/08/25
+% Created:         11/11/25
+% Last Modified:   11/11/25
 %
 % Description: Produces several diagrams of BI-BI, BI-SS, SS-SS, and BI-FF beams
 %   with their eigenspectra.
