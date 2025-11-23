@@ -5,7 +5,7 @@ addpath('Functions\');
 %  Joseph Anthony
 %
 % Created:         11/11/25
-% Last Modified:   11/11/25
+% Last Modified:   11/23/25
 %
 % Description: Produces several diagrams related to the whammy-bar kalimba
 %% Parameters
@@ -75,4 +75,17 @@ figure();
 hold on
 plot(scaled_espectrum(1:50), "LineStyle", "none", "Marker", ".");
 
+%% Find frequency spectrum
 
+% Build ICs
+ics = zeros(length(xvals),1);
+for i = 1:length(ics)
+    if xvals(i) > b
+        ics(i) = -(xvals(i)-b)^2*(3*(L-b)-xvals(i));
+    end
+end
+
+% Best fit of modes to ICs
+ics_shapes = lsqr(basis', ics);
+loglog(abs(diag(evals)), abs(ics_shapes), 'Marker', '.', 'LineStyle', 'none', 'MarkerSize', 15);
+grid on
